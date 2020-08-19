@@ -1,4 +1,4 @@
-#include "raw.h"
+#include "framebuffer.h"
 
 framebuffer_t new_framebuffer(int width, int height) {
   framebuffer_t fb = (framebuffer_t)malloc(sizeof(struct framebuffer));
@@ -28,31 +28,22 @@ void static _set_pixel(framebuffer_t fb, int x, int y, const char* colorcode) {
 	}
 }
 
-void set_pixel(framebuffer_t fb, int x, int y) {
+void fb_set_pixel(framebuffer_t fb, int x, int y) {
 	_set_pixel(fb, x, y, NULL);
 }
 
-void set_pixel_with_color(framebuffer_t fb, int x, int y, const char* colorcode) {
+void fb_set_pixel_with_color(framebuffer_t fb, int x, int y, const char* colorcode) {
 	_set_pixel(fb, x, y, colorcode);
 }
 
-void unset_pixel(framebuffer_t fb, int x, int y) {
+void fb_unset_pixel(framebuffer_t fb, int x, int y) {
   fb->buffer[(y * fb->width) + x] = "  ";
 }
 
-void draw_fb(framebuffer_t fb) {
+void fb_clear(framebuffer_t fb) {
   for (int y = 0; y < fb->height; y++) {
     for (int x = 0; x < fb->width; x++) {
-      printf("%s", fb->buffer[(y * fb->width) + x]); 
-    }
-    printf("\n");
-  }
-}
-
-void clear_fb(framebuffer_t fb) {
-  for (int y = 0; y < fb->height; y++) {
-    for (int x = 0; x < fb->width; x++) {
-      unset_pixel(fb, x, y); 
+      fb_unset_pixel(fb, x, y); 
     }
   }
 }
