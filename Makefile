@@ -1,12 +1,14 @@
-src = $(wildcard src/*.c src/framebuffer/*.c)
+src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 
 binname = graphics
 
-LDFLAGS = -lm 
+LDFLAGS = -lm -lncurses 
 
 $(binname): $(obj)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
+
+clean:
 	rm -f $(obj) $(binname)
