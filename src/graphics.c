@@ -3,9 +3,12 @@
 void blit(framebuffer_t fb) {
   for (int y = 0; y < fb->height; y++) {
     for (int x = 0; x < fb->width; x++) {
-      printf("%s", fb->buffer[(y * fb->width) + x]);
+      int c = fb->buffer[(y *fb->width) + x];
+			if (c < 0) continue;
+			attron(COLOR_PAIR(c));
+			mvaddch(y, x, ' ');
+			attroff(COLOR_PAIR(c));
     }
-    printf("\n");
   }
 }
 
