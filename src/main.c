@@ -82,6 +82,11 @@ int main(int argc, char** argv) {
   
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
   while (1) {
+    int check_max_x, check_max_y = 0;
+    getmaxyx(stdscr, check_max_y, check_max_x);
+    if (check_max_x != max_x || check_max_y != max_y)
+      fb_t = new_framebuffer(check_max_x, check_max_y);
+
     switch(getch()) {
       case 'w':
         c_t->map_y++;
