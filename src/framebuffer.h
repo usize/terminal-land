@@ -13,6 +13,8 @@
 #define FB_COLOR_GREEN  3
 #define FB_COLOR_BLUE  4
 #define FB_COLOR_CYAN  5
+#define FB_COLOR_MAGENTA 6
+#define FB_COLOR_YELLOW 7
 
 
 struct framebuffer {
