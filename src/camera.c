@@ -8,6 +8,9 @@ static void _map_terrain_to_fb(map_t m_t, int map_x, int map_y, framebuffer_t fb
     case sky:
       fb_set_pixel_with_color(fb_t, fb_x, fb_y, FB_COLOR_BLUE);
       break;
+    case grass:
+      fb_set_pixel_with_color(fb_t, fb_x, fb_y, FB_COLOR_GREEN);
+      break;
     default:
       fb_set_pixel_with_color(fb_t, fb_x, fb_y, FB_COLOR_WHITE);
   }
