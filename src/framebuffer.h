@@ -17,16 +17,14 @@
 #define FB_COLOR_YELLOW 7
 
 
-struct framebuffer {
+typedef struct {
   int width;
   int height;
   int* buffer;
-};
+} Framebuffer_t;
 
-typedef struct framebuffer* framebuffer_t;
-
-framebuffer_t new_framebuffer(int width, int height);
-void fb_set_pixel(framebuffer_t fb, int x, int y);
-void fb_set_pixel_with_color(framebuffer_t fb, int x, int y, int colorcode);
-void fb_unset_pixel(framebuffer_t fb, int x, int y);
-void fb_clear(framebuffer_t fb);
+Framebuffer_t* Framebuffer_new(int width, int height);
+void FB_set_pixel(Framebuffer_t *fb, int x, int y);
+void FB_set_pixel_with_color(Framebuffer_t *fb, int x, int y, int colorcode);
+void FB_unset_pixel(Framebuffer_t *fb, int x, int y);
+void FB_clear(Framebuffer_t *fb);

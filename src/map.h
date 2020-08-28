@@ -7,14 +7,14 @@
 #define MAP_HEIGHT 1024
 #define MAP_WIDTH 4096
 
-enum terrain {
+enum Terrain {
   empty,
   dirt,
   grass,
   sky,
 };
 
-struct map {
+typedef struct {
   int mid_x;
   int mid_y;
   int min_x;
@@ -22,10 +22,8 @@ struct map {
   int max_x;
   int max_y;
   int data[MAP_HEIGHT * MAP_WIDTH]; 
-};
+} Map_t;
 
-typedef struct map* map_t;
+Map_t* Map_new();
 
-map_t new_map();
-
-enum terrain map_get_data(map_t m_t, int x, int y);
+enum Terrain Map_get_data(Map_t *m_t, int x, int y);

@@ -1,7 +1,7 @@
 #include "map.h"
 
-map_t new_map() {
-  map_t m = (map_t)_allocate(sizeof(struct map));
+Map_t* Map_new() {
+  Map_t *m = (Map_t*)_allocate(sizeof(Map_t));
   m->mid_x = MAP_WIDTH >> 1;
   m->mid_y = MAP_HEIGHT >> 1;
   m->min_x = 0 - (MAP_WIDTH >> 1);
@@ -20,8 +20,8 @@ map_t new_map() {
   return m;
 }
 
-enum terrain map_get_data(map_t m_t, int x, int y) {
-  if (x < m_t->min_x || x > m_t->max_x) return empty;
-  if (y < m_t->min_y || y > m_t->max_y) return empty;
-  return m_t->data[((m_t->mid_y + y) * MAP_WIDTH) + (m_t->mid_x + x)];
+enum Terrain Map_get_data(Map_t *m, int x, int y) {
+  if (x < m->min_x || x > m->max_x) return empty;
+  if (y < m->min_y || y > m->max_y) return empty;
+  return m->data[((m->mid_y + y) * MAP_WIDTH) + (m->mid_x + x)];
 }

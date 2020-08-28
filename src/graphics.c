@@ -1,6 +1,6 @@
 #include "graphics.h"
 
-void blit(framebuffer_t fb) {
+void Graphics_blit(Framebuffer_t *fb) {
   for (int y = 0; y < fb->height; y++) {
     for (int x = 0; x < fb->width; x++) {
       int c = fb->buffer[(y *fb->width) + x];
@@ -12,7 +12,7 @@ void blit(framebuffer_t fb) {
   }
 }
 
-void draw_line(framebuffer_t fb, int x1, int y1, int x2, int y2) {
+void Graphics_draw_line(Framebuffer_t *fb, int x1, int y1, int x2, int y2) {
   // y = mx + b
   float m = (float)(y2 - y1) / (float)(x2 - x1);
   int b = y2 - (int)(x2 * m);
@@ -31,7 +31,7 @@ void draw_line(framebuffer_t fb, int x1, int y1, int x2, int y2) {
   if (m == 1.0/0.0 || m == -1.0/0.0) {
     for (int steps = 0; steps < abs(y1 -y2); steps++) {
       int y = y1 + (steps * y_step);
-      fb_set_pixel(fb, x1, y);
+      FB_set_pixel(fb, x1, y);
     }
     return;
   }
@@ -40,13 +40,13 @@ void draw_line(framebuffer_t fb, int x1, int y1, int x2, int y2) {
   for (int steps = 0; steps < abs(x2 - x1); steps++) {
     int x = x1 + (steps * x_step);
     int last_y = (int)(x * m) + b;
-    fb_set_pixel(fb, x, last_y);
+    FB_set_pixel(fb, x, last_y);
   }
 
   for (int steps = 0; steps < abs(y2 - last_y); steps++) {
     int y = last_y + (steps * y_step); 
     int x = (y - b) / m;
-    fb_set_pixel(fb, x, y);
+    FB_set_pixel(fb, x, y);
     y = y + y_step; 
   }
 }

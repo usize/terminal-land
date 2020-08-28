@@ -1,6 +1,6 @@
 #include "framebuffer.h"
 
-void static _set_pixel(framebuffer_t fb, int x, int y, int colorcode) {
+void static _set_pixel(Framebuffer_t *fb, int x, int y, int colorcode) {
   if (x < 0 || x >= fb->width) {
     return;
   }
@@ -10,29 +10,29 @@ void static _set_pixel(framebuffer_t fb, int x, int y, int colorcode) {
 	fb->buffer[(y * fb->width) + x] = colorcode;
 }
 
-void fb_set_pixel(framebuffer_t fb, int x, int y) {
+void FB_set_pixel(Framebuffer_t *fb, int x, int y) {
   _set_pixel(fb, x, y, 1);
 }
 
-void fb_set_pixel_with_color(framebuffer_t fb, int x, int y, int colorcode) {
+void FB_set_pixel_with_color(Framebuffer_t *fb, int x, int y, int colorcode) {
   _set_pixel(fb, x, y, colorcode);
 }
 
-void fb_unset_pixel(framebuffer_t fb, int x, int y) {
+void FB_unset_pixel(Framebuffer_t *fb, int x, int y) {
   fb->buffer[(y * fb->width) + x] = -1;
 }
 
-void fb_clear(framebuffer_t fb) {
+void FB_clear(Framebuffer_t *fb) {
 	memset(fb->buffer, -1, sizeof(int) * fb->width * fb->height);
 }
 
-framebuffer_t new_framebuffer(int width, int height) {
-  framebuffer_t fb = (framebuffer_t)_allocate(sizeof(struct framebuffer));
+Framebuffer_t* Framebuffer_new(int width, int height) {
+  Framebuffer_t *fb = (Framebuffer_t*)_allocate(sizeof(Framebuffer_t));
   fb->width = width;
   fb->height = height;
 	int buffer[height * width * 2];
   fb->buffer = (int *)&buffer;
-	fb_clear(fb);	
+	FB_clear(fb);	
   return fb;
 }
 

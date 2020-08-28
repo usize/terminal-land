@@ -35,40 +35,40 @@ int main(int argc, char** argv) {
   // Setup a main framebuffer
   int max_x, max_y = 0;
   getmaxyx(stdscr, max_y, max_x);
-  framebuffer_t fb_t = new_framebuffer(max_x, max_y);
+  Framebuffer_t *screen_ptr = Framebuffer_new(max_x, max_y);
  
   // Setup map and camera
-  map_t m_t = new_map();
-  camera_t c_t = (camera_t)(_allocate(sizeof(struct camera)));
-  c_t->map_x = 0;
-  c_t->map_y = 0;
+  Map_t *map_ptr = Map_new();
+  Camera_t *camera_ptr = (Camera_t*)(_allocate(sizeof(Camera_t)));
+  camera_ptr->map_x = 0;
+  camera_ptr->map_y = 0;
   
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
   while (1) {
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
     if (check_max_x != max_x || check_max_y != max_y)
-      fb_t = new_framebuffer(check_max_x, check_max_y);
+      screen_ptr = Framebuffer_new(check_max_x, check_max_y);
 
     switch(getch()) {
       case 'w':
-        c_t->map_y++;
+        camera_ptr->map_y++;
         break;
       case 's':
-        c_t->map_y--;
+        camera_ptr->map_y--;
         break;
       case 'a':
-        c_t->map_x--;
+        camera_ptr->map_x--;
         break;
       case 'd':
-        c_t->map_x++;
+        camera_ptr->map_x++;
         break;
     }
-    camera_draw(c_t, m_t, fb_t);
-    blit(fb_t);
+    Camera_draw(camera_ptr, map_ptr, screen_ptr);
+    Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&waittime, NULL);
-		fb_clear(fb_t);
+		FB_clear(screen_ptr);
 		//clear();
   }
 }

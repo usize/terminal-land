@@ -4,11 +4,10 @@
 #include "framebuffer.h"
 
 
-struct camera {
+typedef struct {
   int map_x;
   int map_y;
-};
+} Camera_t;
 
-typedef struct camera* camera_t;
 
-void camera_draw(camera_t c_t, map_t m_t, framebuffer_t fb_t);
+void Camera_draw(Camera_t*, Map_t*, Framebuffer_t*);
