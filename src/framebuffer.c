@@ -27,7 +27,7 @@ void fb_clear(framebuffer_t fb) {
 }
 
 framebuffer_t new_framebuffer(int width, int height) {
-  framebuffer_t fb = (framebuffer_t)malloc(sizeof(struct framebuffer));
+  framebuffer_t fb = (framebuffer_t)_allocate(sizeof(struct framebuffer));
   fb->width = width;
   fb->height = height;
 	int buffer[height * width * 2];

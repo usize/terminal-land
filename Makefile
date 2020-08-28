@@ -1,7 +1,7 @@
 src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 
-binname = graphics
+binname = client
 
 LDFLAGS = -lm -lncurses 
 
