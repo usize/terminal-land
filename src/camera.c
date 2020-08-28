@@ -1,22 +1,22 @@
 #include "camera.h"
 
-static void _map_terrain_to_fb(Map_t *m, int map_x, int map_y, Framebuffer_t *fb, int fb_x, int fb_y) {
+static void _map_terrain_to_fb(Map_t *m, int map_x, int map_y, ImageBuffer_t *fb, int fb_x, int fb_y) {
   switch (Map_get_data(m, map_x, map_y)) {
     case dirt:
-      FB_set_pixel_with_color(fb, fb_x, fb_y, FB_COLOR_YELLOW);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_YELLOW);
       break;
     case sky:
-      FB_set_pixel_with_color(fb, fb_x, fb_y, FB_COLOR_BLUE);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_BLUE);
       break;
     case grass:
-      FB_set_pixel_with_color(fb, fb_x, fb_y, FB_COLOR_GREEN);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_GREEN);
       break;
     default:
-      FB_set_pixel_with_color(fb, fb_x, fb_y, FB_COLOR_WHITE);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_WHITE);
   }
 }
 
-void Camera_draw(Camera_t *c, Map_t *m, Framebuffer_t *fb) {
+void Camera_draw(Camera_t *c, Map_t *m, ImageBuffer_t *fb) {
   int half_fb_width = fb->width >> 1;
   int half_fb_height = fb->height >> 1;
 

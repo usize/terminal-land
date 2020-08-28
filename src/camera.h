@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "map.h"
-#include "framebuffer.h"
+#include "image_buffer.h"
 
 
 typedef struct {
@@ -10,4 +10,4 @@ typedef struct {
 } Camera_t;
 
 
-void Camera_draw(Camera_t*, Map_t*, Framebuffer_t*);
+void Camera_draw(Camera_t*, Map_t*, ImageBuffer_t*);

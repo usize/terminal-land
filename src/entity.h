@@ -1,9 +1,9 @@
 #pragma once
 
-#include "framebuffer.h"
+#include "image_buffer.h"
 
 typedef struct {
-  Framebuffer_t fb[8];
+  ImageBuffer_t fb[8];
 } EntitySprite_t;
 
 typedef struct {

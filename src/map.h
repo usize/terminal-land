@@ -1,6 +1,6 @@
 #pragma once
 
-#include "framebuffer.h"
+#include "image_buffer.h"
 #include "string.h"
 #include <stdlib.h>
 

@@ -1,5 +1,5 @@
 #include "camera.h"
-#include "framebuffer.h"
+#include "image_buffer.h"
 #include "graphics.h"
 #include "heap.h"
 #include "map.h"
@@ -23,19 +23,19 @@ int main(int argc, char** argv) {
   timeout(1);
   curs_set(FALSE);
 
-  init_pair(FB_COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
-  init_pair(FB_COLOR_WHITE, COLOR_WHITE, COLOR_WHITE);
-  init_pair(FB_COLOR_RED, COLOR_RED, COLOR_RED);
-  init_pair(FB_COLOR_GREEN, COLOR_GREEN, COLOR_GREEN);        
-  init_pair(FB_COLOR_BLUE, COLOR_BLUE, COLOR_BLUE);        
-  init_pair(FB_COLOR_CYAN, COLOR_CYAN, COLOR_CYAN);
-  init_pair(FB_COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA);
-  init_pair(FB_COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW);
+  init_pair(ImageBuffer_COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
+  init_pair(ImageBuffer_COLOR_WHITE, COLOR_WHITE, COLOR_WHITE);
+  init_pair(ImageBuffer_COLOR_RED, COLOR_RED, COLOR_RED);
+  init_pair(ImageBuffer_COLOR_GREEN, COLOR_GREEN, COLOR_GREEN);        
+  init_pair(ImageBuffer_COLOR_BLUE, COLOR_BLUE, COLOR_BLUE);        
+  init_pair(ImageBuffer_COLOR_CYAN, COLOR_CYAN, COLOR_CYAN);
+  init_pair(ImageBuffer_COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA);
+  init_pair(ImageBuffer_COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW);
 
-  // Setup a main framebuffer
+  // Setup a main window
   int max_x, max_y = 0;
   getmaxyx(stdscr, max_y, max_x);
-  Framebuffer_t *screen_ptr = Framebuffer_new(max_x, max_y);
+  ImageBuffer_t *screen_ptr = ImageBuffer_new(max_x, max_y);
  
   // Setup map and camera
   Map_t *map_ptr = Map_new();
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
     if (check_max_x != max_x || check_max_y != max_y)
-      screen_ptr = Framebuffer_new(check_max_x, check_max_y);
+      screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
 
     switch(getch()) {
       case 'w':
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&waittime, NULL);
-		FB_clear(screen_ptr);
+		ImageBuffer_clear(screen_ptr);
 		//clear();
   }
 }
