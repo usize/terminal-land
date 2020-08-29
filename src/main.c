@@ -1,7 +1,8 @@
 #include "camera.h"
-#include "image_buffer.h"
+#include "entity.h"
 #include "graphics.h"
 #include "heap.h"
+#include "image_buffer.h"
 #include "map.h"
 
 #include "ncurses.h"
@@ -11,7 +12,7 @@
 #include "stdio.h"
 #include "time.h"
 
-#define FPS 16
+#define FPS 1
 
 
 int main(int argc, char** argv) {
@@ -44,6 +45,7 @@ int main(int argc, char** argv) {
   camera_ptr->map_y = 0;
   
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
+  
   while (1) {
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
