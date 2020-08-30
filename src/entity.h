@@ -25,6 +25,7 @@ typedef struct{
 } PositionComponent_t;
 
 typedef struct {
+  int id;
   bool destroyed;
   PositionComponent_t position;
   PhysicsComponent_t physics;

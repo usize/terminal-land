@@ -12,7 +12,7 @@
 #include "stdio.h"
 #include "time.h"
 
-#define FPS 1
+#define FPS 60
 
 
 int main(int argc, char** argv) {
@@ -46,6 +46,14 @@ int main(int argc, char** argv) {
   
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
   
+  for (int i = 0; i < 512; i++) {
+    entity_id id = Entity_create();
+    Entity_t *e = Entity_get(id);
+    ImageBuffer_set_pixel_with_color(e->image.frames[0], 0, 0, ImageBuffer_COLOR_YELLOW);
+    ImageBuffer_set_pixel_with_color(e->image.frames[0], 1, 1, ImageBuffer_COLOR_RED);
+    ImageBuffer_set_pixel_with_color(e->image.frames[0], 2, 2, ImageBuffer_COLOR_MAGENTA);
+  }
+
   while (1) {
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
