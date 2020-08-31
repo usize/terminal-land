@@ -88,11 +88,15 @@ int main(int argc, char** argv) {
         break;
       case 'a':
         player->position.x--;
-        camera_ptr->x--;
+        if (player->position.x < (camera_ptr->x - max_x / 4)) {
+          camera_ptr->x--;
+        }
         break;
       case 'd':
         player->position.x++;
-        camera_ptr->x++;
+        if (player->position.x > (camera_ptr->x + max_x / 4)) {
+          camera_ptr->x++;
+        }
         break;
     }
     Camera_draw(camera_ptr, map_ptr, screen_ptr);
