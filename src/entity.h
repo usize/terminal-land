@@ -12,13 +12,6 @@ typedef struct {
   ImageBuffer_t *frames[MAX_IMAGE_FRAMES];
 } ImageComponent_t;
 
-typedef struct {
-  double y_acc;
-  double x_acc;
-  int hitbox_x;
-  int hitbox_y;
-} PhysicsComponent_t;
-
 typedef struct{
   int x;
   int y;
@@ -28,7 +21,6 @@ typedef struct {
   int id;
   bool destroyed;
   PositionComponent_t position;
-  PhysicsComponent_t physics;
   ImageComponent_t image;
 } Entity_t;
 
@@ -38,4 +30,4 @@ entity_id Entity_create();
 Entity_t* Entity_get(entity_id);
 void Entity_destroy(entity_id);
 Entity_t* Entity_iterator();
-void Entity_reset_iterator();
+void Entity_clear_iterator();

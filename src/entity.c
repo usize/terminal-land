@@ -22,9 +22,7 @@ entity_id Entity_create() {
       e->id = nonce;
       e->destroyed = false;
       e->position.x = 0;
-      e->position.y = 0;
-      e->physics.y_acc = -10.0;
-      e->physics.x_acc = 0.0;
+      e->position.y = 4;
       e->image.framecount = 0;
       entities[i] = e;
       nonce++;

@@ -4,6 +4,7 @@
 #include "heap.h"
 #include "image_buffer.h"
 #include "map.h"
+#include "logging.h"
 
 #include "ncurses.h"
 
@@ -16,6 +17,8 @@
 
 
 int main(int argc, char** argv) {
+  OPEN_LOG("/tmp/terminal-land.log1");
+
   // Setup our ncurses screen
   initscr();
   start_color();
@@ -41,19 +44,33 @@ int main(int argc, char** argv) {
   // Setup map and camera
   Map_t *map_ptr = Map_new();
   Camera_t *camera_ptr = (Camera_t*)(_allocate(sizeof(Camera_t)));
-  camera_ptr->map_x = 0;
-  camera_ptr->map_y = 0;
+  camera_ptr->x = 0;
+  camera_ptr->y = 0;
   
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
-  
+
+  Entity_t *player = NULL;
   for (int i = 0; i < 512; i++) {
     entity_id id = Entity_create();
     Entity_t *e = Entity_get(id);
-    ImageBuffer_set_pixel_with_color(e->image.frames[0], 0, 0, ImageBuffer_COLOR_YELLOW);
-    ImageBuffer_set_pixel_with_color(e->image.frames[0], 1, 1, ImageBuffer_COLOR_RED);
-    ImageBuffer_set_pixel_with_color(e->image.frames[0], 2, 2, ImageBuffer_COLOR_MAGENTA);
+    if (player == NULL) {
+      player = e;
+    }
+    ImageBuffer_set_pixel_with_color(
+        e->image.frames[0], 4, 3, ImageBuffer_COLOR_YELLOW);
+    ImageBuffer_set_pixel_with_color(
+        e->image.frames[0], 3, 2, ImageBuffer_COLOR_RED);
+    ImageBuffer_set_pixel_with_color(
+        e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
+    ImageBuffer_set_pixel_with_color(
+        e->image.frames[0], 0, 3, ImageBuffer_COLOR_YELLOW);
+    ImageBuffer_set_pixel_with_color(
+        e->image.frames[0], 1, 2, ImageBuffer_COLOR_RED);
+    ImageBuffer_set_pixel_with_color(
+        e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
   }
 
+  player->position.x = 25;
   while (1) {
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
@@ -62,16 +79,20 @@ int main(int argc, char** argv) {
 
     switch(getch()) {
       case 'w':
-        camera_ptr->map_y++;
+        player->position.y++;
+        camera_ptr->y++;
         break;
       case 's':
-        camera_ptr->map_y--;
+        player->position.y--;
+        camera_ptr->y--;
         break;
       case 'a':
-        camera_ptr->map_x--;
+        player->position.x--;
+        camera_ptr->x--;
         break;
       case 'd':
-        camera_ptr->map_x++;
+        player->position.x++;
+        camera_ptr->x++;
         break;
     }
     Camera_draw(camera_ptr, map_ptr, screen_ptr);
@@ -81,4 +102,6 @@ int main(int argc, char** argv) {
 		ImageBuffer_clear(screen_ptr);
 		//clear();
   }
+
+  CLOSE_LOG();
 }

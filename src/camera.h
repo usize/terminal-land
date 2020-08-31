@@ -1,12 +1,14 @@
 #pragma once 
 
+#include "entity.h"
+#include "graphics.h"
 #include "map.h"
 #include "image_buffer.h"
 
 
 typedef struct {
-  int map_x;
-  int map_y;
+  int x;
+  int y;
 } Camera_t;
 
 

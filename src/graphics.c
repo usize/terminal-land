@@ -51,3 +51,26 @@ void Graphics_draw_line(ImageBuffer_t *fb, int x1, int y1, int x2, int y2) {
   }
 }
 
+void Graphics_blit_to_ib(
+    ImageBuffer_t* from, ImageBuffer_t* to, int x_offset, int y_offset) {
+  int start_at_x = x_offset;
+  int end_at_x = x_offset + from->width;
+  int start_at_y = y_offset;
+  int end_at_y = y_offset + from->height;
+  if (start_at_x >= to->width || start_at_x < 0) return;
+  if (start_at_y >= to->height || start_at_y < 0) return;
+  if (end_at_x > to->width) {
+    end_at_x = to->width; 
+  }
+  if (end_at_y > to->height) {
+    end_at_y = to->height; 
+  }
+  int copied_width = end_at_x - start_at_x;
+  int copied_height = end_at_y - start_at_y;
+  for (int y = 0; y < copied_height; y++) {
+    for (int x = 0; x < copied_width; x++) {
+      int v = from->buffer[(y * from->width) + x];
+      if (v > 0) to->buffer[((start_at_y + y) * to->width) + start_at_x + x] = v;
+    } 
+  }
+}
