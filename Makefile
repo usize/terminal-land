@@ -1,7 +1,7 @@
 src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 
-binname = client
+binname = terminal-land
 
 LDFLAGS = -lm -lncurses 
 
