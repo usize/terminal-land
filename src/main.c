@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
 
   Entity_t *player = NULL;
-  for (int i = 0; i < 512; i++) {
+  for (int i = 0; i < 1; i++) {
     entity_id id = Entity_create();
     Entity_t *e = Entity_get(id);
     if (player == NULL) {
@@ -71,7 +71,9 @@ int main(int argc, char** argv) {
   }
 
   player->position.x = 25;
-  while (1) {
+
+  bool running = true;
+  while (running) {
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
     if (check_max_x != max_x || check_max_y != max_y)
@@ -97,6 +99,8 @@ int main(int argc, char** argv) {
         if (player->position.x > (camera_ptr->x + max_x / 4)) {
           camera_ptr->x++;
         }
+      case 'q':
+        running = false;
         break;
     }
     Camera_draw(camera_ptr, map_ptr, screen_ptr);

@@ -3,10 +3,11 @@ obj = $(src:.c=.o)
 
 binname = terminal-land
 
+OPTIONS=-Wall
 LDFLAGS = -lm -lncurses 
 
 $(binname): $(obj)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) $(OPTIONS) -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 
