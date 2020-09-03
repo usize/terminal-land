@@ -99,6 +99,7 @@ int main(int argc, char** argv) {
         if (player->position.x > (camera_ptr->x + max_x / 4)) {
           camera_ptr->x++;
         }
+        break;
       case 'q':
         running = false;
         break;
