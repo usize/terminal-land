@@ -9,6 +9,7 @@
 
 typedef struct {
   int framecount;
+  int current_frame;
   ImageBuffer_t *frames[MAX_IMAGE_FRAMES];
 } ImageComponent_t;
 
