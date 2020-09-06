@@ -1,13 +1,19 @@
 #pragma once
 
 #include "entity.h"
+#include "gamecontext.h"
 
-#define MAX_EVENTS = 128
+#define MAX_EVENTS 128
+#define N_EVENT_TYPES 3
 
 typedef enum {
+  // Request events are sent to a server on behalf of a client.
+  REQUEST_ENTITY_CREATE,
+  REQUEST_ENTITY_DESTROY,
+  REQUEST_ENTITY_MOVE,
   ENTITY_CREATE,
   ENTITY_DESTROY,
-  ENTITY_POSITION_CHANGE,
+  ENTITY_MOVE,
 } event_type;
 
 typedef struct {
@@ -22,12 +28,12 @@ typedef struct {
 
 typedef struct {
   entity_id id;
-} EntityPositionChangeEvent;
+} EntityMoveEvent;
 
 typedef union {
   EntityCreateEvent entity_create;
   EntityDestroyEvent entity_destroy;
-  EntityPositionChangeEvent entity_position_change;
+  EntityMoveEvent entity_move;
 } _event;
 
 typedef struct {
@@ -35,4 +41,15 @@ typedef struct {
   _event data;
 } Event_t;
 
-typedef int (*event_handler)(Event_t);
+typedef int (*event_handler)(GameContext_t*, Event_t);
+
+typedef struct {
+  Event_t queue[MAX_EVENTS];
+  int queue_top;
+  event_handler handlers[N_EVENT_TYPES];
+} EventBus_t;
+
+EventBus_t* EventBus_new();
+void EventBus_push(Event_t);
+Event_t EventBus_pop();
+void EventBus_register_handler(event_type, event_handler);
