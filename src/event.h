@@ -35,3 +35,4 @@ typedef struct {
   _event data;
 } Event_t;
 
+typedef int (*event_handler)(Event_t);

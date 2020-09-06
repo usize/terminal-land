@@ -1,7 +1,6 @@
 #include "camera.h"
 #include "entity.h"
 #include "graphics.h"
-#include "heap.h"
 #include "image_buffer.h"
 #include "map.h"
 #include "logging.h"
@@ -40,10 +39,13 @@ int main(int argc, char** argv) {
   int max_x, max_y = 0;
   getmaxyx(stdscr, max_y, max_x);
   ImageBuffer_t *screen_ptr = ImageBuffer_new(max_x, max_y);
- 
+
+  // Setup entities.
+  EntityPool_t *entity_pool = EntityPool_create();
+
   // Setup map and camera
   Map_t *map_ptr = Map_new();
-  Camera_t *camera_ptr = (Camera_t*)(_allocate(sizeof(Camera_t)));
+  Camera_t *camera_ptr = (Camera_t*)(malloc(sizeof(Camera_t)));
   camera_ptr->x = 0;
   camera_ptr->y = 0;
   
@@ -51,8 +53,8 @@ int main(int argc, char** argv) {
 
   Entity_t *player = NULL;
   for (int i = 0; i < 1; i++) {
-    entity_id id = Entity_create();
-    Entity_t *e = Entity_get(id);
+    entity_id id = Entity_create(entity_pool);
+    Entity_t *e = Entity_get(entity_pool, id);
     if (player == NULL) {
       player = e;
     }
@@ -104,7 +106,7 @@ int main(int argc, char** argv) {
         running = false;
         break;
     }
-    Camera_draw(camera_ptr, map_ptr, screen_ptr);
+    Camera_draw(camera_ptr, map_ptr, entity_pool, screen_ptr);
     Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&waittime, NULL);

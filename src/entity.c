@@ -1,56 +1,74 @@
 #include "entity.h"
 
-static Entity_t *entities[MAX_ENTITIES];
-
-entity_id Entity_create() {
-  static int nonce = 0;
+entity_id Entity_create(EntityPool_t *ep) {
   for (int i = 0; i < MAX_ENTITIES; i++) {
-    if (entities[i] == NULL || entities[i]->destroyed) {
-      Entity_t *e = entities[i];
-      // Try to reuse existing entities
-      if (e == NULL) {
-        e = (Entity_t*)_allocate(sizeof(Entity_t));
-        for (int i = 0; i < MAX_IMAGE_FRAMES; i++) {
-          e->image.frames[i] = ImageBuffer_new(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE); 
-        } 
-      } else {
-        for (int i = 0; i < MAX_IMAGE_FRAMES; i++) {
-          ImageBuffer_clear(e->image.frames[i]);
-        } 
-      }
-      while ((nonce % MAX_ENTITIES) != i) nonce++;
-      e->id = nonce;
+    Entity_t *e = &ep->entities[i];
+    if (e->id < 0 || e->destroyed) {
+      // Always give recycled destroyed entities a new id. 
+      while ((ep->nonce % MAX_ENTITIES) != i) ep->nonce++;
+      e->id = ep->nonce;
       e->destroyed = false;
       e->position.x = 0;
       e->position.y = 4;
       e->image.framecount = 0;
-      entities[i] = e;
-      nonce++;
+      ep->nonce++;
+      for (int j = 0; j < MAX_IMAGE_FRAMES; j++) {
+        if (e->image.frames[j] != NULL) {
+          ImageBuffer_clear(e->image.frames[j]);
+        } else {
+          e->image.frames[j] = ImageBuffer_new(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
+        } 
+      }
       return e->id;
     } 
   }
   return -1;
 }
 
-Entity_t* Entity_get(entity_id id) {
-  return entities[id % MAX_ENTITIES];
-}
-
-void Entity_destroy(entity_id id) {
-  Entity_t *e = Entity_get(id % MAX_ENTITIES);
-  if (e) e->destroyed = true;
-}
-
-static int entities_iterator = 0;
-Entity_t* Entity_iterator() {
-  Entity_t *e = NULL;
-  while (e == NULL && entities_iterator < MAX_ENTITIES) {
-    e = Entity_get(entities_iterator);
-    entities_iterator++;
+Entity_t* Entity_get(EntityPool_t *ep, entity_id id) {
+  Entity_t *e = &ep->entities[id % MAX_ENTITIES];
+  if (e->id < 0 || e->destroyed) {
+    return NULL;
   }
   return e;
 }
 
-void Entity_clear_iterator() {
-  entities_iterator = 0;
+void Entity_destroy(EntityPool_t *ep, entity_id id) {
+  Entity_t *e = Entity_get(ep, id % MAX_ENTITIES);
+  e->destroyed = true;
+}
+
+Entity_t* EntityPool_iterator(EntityPool_t *ep) {
+  Entity_t *e = NULL;
+  while (e == NULL && ep->entities_iterator < MAX_ENTITIES) {
+    e = Entity_get(ep, ep->entities_iterator); 
+    ep->entities_iterator++;
+  }
+  return e;
+}
+
+void EntityPool_clear_iterator(EntityPool_t *ep) {
+  ep->entities_iterator = 0;
+}
+
+EntityPool_t* EntityPool_create() {
+  EntityPool_t *ep = malloc(sizeof(*ep));
+  ep->nonce = 0;
+  ep->entities_iterator = 0;
+  for (int i = 0; i < MAX_ENTITIES; i++) {
+    ep->entities[i].id = -1;
+  }
+  return ep;
+}
+
+void EntityPool_destroy(EntityPool_t *ep) {
+  EntityPool_clear_iterator(ep);
+  for (Entity_t *e = EntityPool_iterator(ep); e != NULL; e = EntityPool_iterator(ep)) {
+    for (int j = 0; j < MAX_IMAGE_FRAMES; j++) {
+      if (e->image.frames[j] != NULL) {
+        free(e->image.frames[j]);
+      }
+    }
+  }
+  free(ep);
 }

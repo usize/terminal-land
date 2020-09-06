@@ -1,16 +1,18 @@
 #pragma once
 
-#include "heap.h"
 #include "image_buffer.h"
+#include "stdlib.h"
 
-#define MAX_ENTITIES 1024 
+#define MAX_ENTITIES 256 
 #define MAX_IMAGE_SIZE 64 
 #define MAX_IMAGE_FRAMES 1
+
+typedef int entity_id;
 
 typedef struct {
   int framecount;
   int current_frame;
-  ImageBuffer_t *frames[MAX_IMAGE_FRAMES];
+  ImageBuffer_t* frames[MAX_IMAGE_FRAMES];
 } ImageComponent_t;
 
 typedef struct{
@@ -19,16 +21,22 @@ typedef struct{
 } PositionComponent_t;
 
 typedef struct {
-  int id;
+  entity_id id;
   bool destroyed;
   PositionComponent_t position;
   ImageComponent_t image;
 } Entity_t;
 
-typedef int entity_id;
+typedef struct {
+  Entity_t entities[MAX_ENTITIES];
+  int nonce;
+  int entities_iterator;
+} EntityPool_t;
 
-entity_id Entity_create();
-Entity_t* Entity_get(entity_id);
-void Entity_destroy(entity_id);
-Entity_t* Entity_iterator();
-void Entity_clear_iterator();
+entity_id Entity_create(EntityPool_t*);
+Entity_t* Entity_get(EntityPool_t*, entity_id);
+void Entity_destroy(EntityPool_t*, entity_id);
+Entity_t* EntityPool_iterator(EntityPool_t*);
+void EntityPool_clear_iterator(EntityPool_t*);
+EntityPool_t* EntityPool_create();
+void EntityPool_destroy(EntityPool_t*);

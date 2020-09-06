@@ -27,7 +27,7 @@ void ImageBuffer_clear(ImageBuffer_t *fb) {
 }
 
 ImageBuffer_t* ImageBuffer_new(int width, int height) {
-  ImageBuffer_t *fb = (ImageBuffer_t*)_allocate(sizeof(ImageBuffer_t));
+  ImageBuffer_t *fb = (ImageBuffer_t*)malloc(sizeof(*fb));
   fb->width = width;
   fb->height = height;
 	int buffer[height * width * 2];

@@ -1,7 +1,7 @@
 #include "map.h"
 
 Map_t* Map_new() {
-  Map_t *m = (Map_t*)_allocate(sizeof(Map_t));
+  Map_t *m = (Map_t*)malloc(sizeof(*m));
   m->mid_x = MAP_WIDTH >> 1;
   m->mid_y = MAP_HEIGHT >> 1;
   m->min_x = 0 - (MAP_WIDTH >> 1);

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "heap.h"
 #include "stdio.h"
 #include "string.h"
 #include "ncurses.h"
+#include "stdlib.h"
 
 // color codes
 

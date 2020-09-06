@@ -17,7 +17,7 @@ static void _map_terrain_to_fb(const Map_t *m, int map_x, int map_y, ImageBuffer
   }
 }
 
-void Camera_draw(const Camera_t *c, const Map_t *m, ImageBuffer_t *fb) {
+void Camera_draw(const Camera_t *c, const Map_t *m, EntityPool_t *ep, ImageBuffer_t *fb) {
   int half_fb_width = fb->width >> 1;
   int half_fb_height = fb->height >> 1;
 
@@ -36,7 +36,8 @@ void Camera_draw(const Camera_t *c, const Map_t *m, ImageBuffer_t *fb) {
   }
 
   bool write_log = false;
-  for (Entity_t *e = Entity_iterator(); e != NULL; e = Entity_iterator()) {
+  EntityPool_clear_iterator(ep);
+  for (Entity_t *e = EntityPool_iterator(ep); e != NULL; e = EntityPool_iterator(ep)) {
     if (e->position.x >= from_x &&
         e->position.x <= to_x &&
         e->position.y >= from_y &&
@@ -58,5 +59,5 @@ void Camera_draw(const Camera_t *c, const Map_t *m, ImageBuffer_t *fb) {
           to_y - e->position.y); 
     }
   }
-  Entity_clear_iterator();
+  EntityPool_clear_iterator(ep);
 }
