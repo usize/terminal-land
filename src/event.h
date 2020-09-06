@@ -2,6 +2,8 @@
 
 #include "entity.h"
 
+#define MAX_EVENTS = 128
+
 typedef enum {
   ENTITY_CREATE,
   ENTITY_DESTROY,

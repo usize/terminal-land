@@ -1,6 +1,6 @@
 #include "graphics.h"
 
-void Graphics_blit(ImageBuffer_t *fb) {
+void Graphics_blit(const ImageBuffer_t *fb) {
   for (int y = 0; y < fb->height; y++) {
     for (int x = 0; x < fb->width; x++) {
       int c = fb->buffer[(y *fb->width) + x];
@@ -52,7 +52,7 @@ void Graphics_draw_line(ImageBuffer_t *fb, int x1, int y1, int x2, int y2) {
 }
 
 void Graphics_blit_to_ib(
-    ImageBuffer_t* from, ImageBuffer_t* to, int x_offset, int y_offset) {
+    const ImageBuffer_t* from, ImageBuffer_t* to, int x_offset, int y_offset) {
   int start_at_x = x_offset;
   int end_at_x = x_offset + from->width;
   int start_at_y = y_offset;

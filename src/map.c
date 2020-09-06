@@ -20,7 +20,7 @@ Map_t* Map_new() {
   return m;
 }
 
-enum Terrain Map_get_data(Map_t *m, int x, int y) {
+enum Terrain Map_get_data(const Map_t *m, int x, int y) {
   if (x < m->min_x || x > m->max_x) return empty;
   if (y < m->min_y || y > m->max_y) return empty;
   return m->data[((m->mid_y + y) * MAP_WIDTH) + (m->mid_x + x)];

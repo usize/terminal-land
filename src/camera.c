@@ -1,7 +1,7 @@
 #include "camera.h"
 #include "logging.h"
 
-static void _map_terrain_to_fb(Map_t *m, int map_x, int map_y, ImageBuffer_t *fb, int fb_x, int fb_y) {
+static void _map_terrain_to_fb(const Map_t *m, int map_x, int map_y, ImageBuffer_t *fb, int fb_x, int fb_y) {
   switch (Map_get_data(m, map_x, map_y)) {
     case dirt:
       ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_YELLOW);
@@ -17,7 +17,7 @@ static void _map_terrain_to_fb(Map_t *m, int map_x, int map_y, ImageBuffer_t *fb
   }
 }
 
-void Camera_draw(Camera_t *c, Map_t *m, ImageBuffer_t *fb) {
+void Camera_draw(const Camera_t *c, const Map_t *m, ImageBuffer_t *fb) {
   int half_fb_width = fb->width >> 1;
   int half_fb_height = fb->height >> 1;
 

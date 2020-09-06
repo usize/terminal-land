@@ -12,4 +12,4 @@ typedef struct {
 } Camera_t;
 
 
-void Camera_draw(Camera_t*, Map_t*, ImageBuffer_t*);
+void Camera_draw(const Camera_t*, const Map_t*, ImageBuffer_t*);

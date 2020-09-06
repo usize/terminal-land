@@ -4,8 +4,8 @@
 #include "string.h"
 #include <stdlib.h>
 
-#define MAP_HEIGHT 1024
-#define MAP_WIDTH 4096
+#define MAP_HEIGHT 512
+#define MAP_WIDTH 1024
 
 enum Terrain {
   empty,
@@ -26,4 +26,4 @@ typedef struct {
 
 Map_t* Map_new();
 
-enum Terrain Map_get_data(Map_t *m_t, int x, int y);
+enum Terrain Map_get_data(const Map_t *m_t, int x, int y);
