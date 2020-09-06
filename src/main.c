@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   ImageBuffer_t *screen_ptr = ImageBuffer_new(max_x, max_y);
 
   // Setup entities.
-  EntityPool_t *entity_pool = EntityPool_create();
+  EntityPool_t *entity_pool_ptr = EntityPool_create();
 
   // Setup map and camera
   Map_t *map_ptr = Map_new();
@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
 
   Entity_t *player = NULL;
   for (int i = 0; i < 1; i++) {
-    entity_id id = Entity_create(entity_pool);
-    Entity_t *e = Entity_get(entity_pool, id);
+    entity_id id = Entity_create(entity_pool_ptr);
+    Entity_t *e = Entity_get(entity_pool_ptr, id);
     if (player == NULL) {
       player = e;
     }
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
         running = false;
         break;
     }
-    Camera_draw(camera_ptr, map_ptr, entity_pool, screen_ptr);
+    Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
     Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&waittime, NULL);
@@ -115,4 +115,7 @@ int main(int argc, char** argv) {
   }
 
   CLOSE_LOG();
+  EntityPool_destroy(entity_pool_ptr);
+  free(map_ptr);
+  free(camera_ptr);
 }
