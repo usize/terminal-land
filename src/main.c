@@ -193,7 +193,4 @@ int main(int argc, char** argv) {
   }
 
   CLOSE_LOG();
-  EntityPool_destroy(entity_pool_ptr);
-  free(map_ptr);
-  free(camera_ptr);
 }
