@@ -31,6 +31,28 @@ int local_movement_handler(Event_t ev, GameContext_t* ctx) {
   return 0;
 }
 
+int local_create_entity_handler(Event_t ev, GameContext_t* ctx) {
+  entity_id id = Entity_create(ctx->entity_pool);
+  Entity_t *e = Entity_get(ctx->entity_pool, id);
+  if (ctx->player == NULL) {
+    ctx->player = e;
+  }
+  ImageBuffer_set_pixel_with_color(
+      e->image.frames[0], 4, 3, ImageBuffer_COLOR_YELLOW);
+  ImageBuffer_set_pixel_with_color(
+      e->image.frames[0], 3, 2, ImageBuffer_COLOR_RED);
+  ImageBuffer_set_pixel_with_color(
+      e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
+  ImageBuffer_set_pixel_with_color(
+      e->image.frames[0], 0, 3, ImageBuffer_COLOR_YELLOW);
+  ImageBuffer_set_pixel_with_color(
+      e->image.frames[0], 1, 2, ImageBuffer_COLOR_RED);
+  ImageBuffer_set_pixel_with_color(
+      e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
+  return 0;
+}
+
+
 int main(int argc, char** argv) {
   OPEN_LOG("/tmp/terminal-land.log1");
 
@@ -66,50 +88,40 @@ int main(int argc, char** argv) {
   camera_ptr->y = 0;
 
   // Setup game context
-  GameContext_t ctx = {.map=map_ptr, .entity_pool=entity_pool_ptr};
+  GameContext_t ctx = {.map=map_ptr, .entity_pool=entity_pool_ptr, .player=NULL};
 
   // Initialize event handlers
   EventBus_t event_bus;
   event_bus.queue_top = 0;
+  EventBus_register_handler(&event_bus, ENTITY_CREATE, local_create_entity_handler);
   EventBus_register_handler(&event_bus, ENTITY_MOVE, local_movement_handler);
+
+  Event_t ev;
+  EntityCreateEvent create_entity_event = {};
+  ev.type = ENTITY_CREATE;
+  ev.data = (event)create_entity_event;
+  EventBus_push(&event_bus, ev);
+  EventBus_handle_events(&event_bus, &ctx);
+  Entity_t *player = ctx.player;
+  if (player == NULL) {
+    return -99;
+  }
 
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
 
-  Entity_t *player = NULL;
-  for (int i = 0; i < 1; i++) {
-    entity_id id = Entity_create(entity_pool_ptr);
-    Entity_t *e = Entity_get(entity_pool_ptr, id);
-    if (player == NULL) {
-      player = e;
-    }
-    ImageBuffer_set_pixel_with_color(
-        e->image.frames[0], 4, 3, ImageBuffer_COLOR_YELLOW);
-    ImageBuffer_set_pixel_with_color(
-        e->image.frames[0], 3, 2, ImageBuffer_COLOR_RED);
-    ImageBuffer_set_pixel_with_color(
-        e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
-    ImageBuffer_set_pixel_with_color(
-        e->image.frames[0], 0, 3, ImageBuffer_COLOR_YELLOW);
-    ImageBuffer_set_pixel_with_color(
-        e->image.frames[0], 1, 2, ImageBuffer_COLOR_RED);
-    ImageBuffer_set_pixel_with_color(
-        e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
-  }
-
-  player->position.x = 25;
-
   bool running = true;
   while (running) {
+    // Dynamic screen resizing.
     int check_max_x, check_max_y = 0;
     getmaxyx(stdscr, check_max_y, check_max_x);
     if (check_max_x != max_x || check_max_y != max_y)
       screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
 
+    // Input handling.
     EntityMoveEvent move_right_event = {.id=player->id, .delta_x=1, .delta_y=0};
     EntityMoveEvent move_left_event = {.id=player->id, .delta_x=-1, .delta_y=0};
     EntityMoveEvent move_up_event = {.id=player->id, .delta_x=0, .delta_y=1};
     EntityMoveEvent move_down_event = {.id=player->id, .delta_x=0, .delta_y=-1};
-    Event_t ev;
     ev.type = ENTITY_MOVE;
     switch(getch()) {
       case 'w':
@@ -132,13 +144,16 @@ int main(int argc, char** argv) {
         running = false;
         break;
     }
+
+    // Event processing.
     EventBus_handle_events(&event_bus, &ctx);
+
+    // Rendering.
     Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
     Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&waittime, NULL);
 		ImageBuffer_clear(screen_ptr);
-		//clear();
   }
 
   CLOSE_LOG();

@@ -17,9 +17,7 @@ typedef enum {
   ENTITY_MOVE,
 } event_type;
 
-typedef struct {
-  entity_id id;
-} EntityCreateEvent;
+typedef struct {} EntityCreateEvent;
 
 typedef struct {
   entity_id id;
