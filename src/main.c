@@ -12,6 +12,7 @@
 #include "math.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include "string.h"
 #include "time.h"
 
 #define FPS 60
@@ -52,8 +53,41 @@ int local_create_entity_handler(Event_t ev, GameContext_t* ctx) {
   return 0;
 }
 
+typedef enum {
+  LOCAL_MODE,
+  CLIENT_MODE,
+  SERVER_MODE
+} runmode;
 
 int main(int argc, char** argv) {
+  runmode mode = LOCAL_MODE;
+  if (argc > 1) {
+    if (strncmp(argv[1], "server", 6)) {
+      mode = SERVER_MODE; 
+    }
+    if (strncmp(argv[1], "client", 6)) {
+      mode = CLIENT_MODE; 
+    }
+  }
+
+  bool running = true;
+  /* CLIENT MODE */
+  while (mode == CLIENT_MODE && running) {
+  
+  }
+  if (mode == CLIENT_MODE) {
+    return 0;
+  }
+
+  /* SERVER MODE */
+  while (mode == SERVER_MODE && running) {
+  
+  }
+  if (mode == SERVER_MODE) {
+    return 0;
+  }
+
+  /* LOCAL MODE */
   OPEN_LOG("/tmp/terminal-land.log1");
 
   // Setup our ncurses screen
@@ -83,12 +117,14 @@ int main(int argc, char** argv) {
 
   // Setup map and camera
   Map_t *map_ptr = Map_new();
-  Camera_t *camera_ptr = (Camera_t*)(malloc(sizeof(Camera_t)));
-  camera_ptr->x = 0;
-  camera_ptr->y = 0;
 
   // Setup game context
   GameContext_t ctx = {.map=map_ptr, .entity_pool=entity_pool_ptr, .player=NULL};
+
+  // Setup camera.
+  Camera_t *camera_ptr = (Camera_t*)(malloc(sizeof(Camera_t)));
+  camera_ptr->x = 0;
+  camera_ptr->y = 0;
 
   // Initialize event handlers
   EventBus_t event_bus;
@@ -109,7 +145,6 @@ int main(int argc, char** argv) {
 
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
 
-  bool running = true;
   while (running) {
     // Dynamic screen resizing.
     int check_max_x, check_max_y = 0;
