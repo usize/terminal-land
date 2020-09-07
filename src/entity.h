@@ -4,7 +4,7 @@
 #include "stdlib.h"
 
 #define MAX_ENTITIES 256 
-#define MAX_IMAGE_SIZE 64 
+#define MAX_IMAGE_SIZE 32 
 #define MAX_IMAGE_FRAMES 1
 
 typedef int entity_id;

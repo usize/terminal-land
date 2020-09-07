@@ -9,7 +9,7 @@ entity_id Entity_create(EntityPool_t *ep) {
       e->id = ep->nonce;
       e->destroyed = false;
       e->position.x = 0;
-      e->position.y = 4;
+      e->position.y = MAX_IMAGE_SIZE >> 1;
       e->image.framecount = 0;
       ep->nonce++;
       for (int j = 0; j < MAX_IMAGE_FRAMES; j++) {

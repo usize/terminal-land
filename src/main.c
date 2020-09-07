@@ -38,18 +38,10 @@ int local_create_entity_handler(Event_t ev, GameContext_t* ctx) {
   if (ctx->player == NULL) {
     ctx->player = e;
   }
-  ImageBuffer_set_pixel_with_color(
-      e->image.frames[0], 4, 3, ImageBuffer_COLOR_YELLOW);
-  ImageBuffer_set_pixel_with_color(
-      e->image.frames[0], 3, 2, ImageBuffer_COLOR_RED);
-  ImageBuffer_set_pixel_with_color(
-      e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
-  ImageBuffer_set_pixel_with_color(
-      e->image.frames[0], 0, 3, ImageBuffer_COLOR_YELLOW);
-  ImageBuffer_set_pixel_with_color(
-      e->image.frames[0], 1, 2, ImageBuffer_COLOR_RED);
-  ImageBuffer_set_pixel_with_color(
-      e->image.frames[0], 2, 1, ImageBuffer_COLOR_MAGENTA);
+  Graphics_draw_line(e->image.frames[0], 7, 2, 7, 17, ImageBuffer_COLOR_RED);
+  Graphics_draw_line(e->image.frames[0], 8, 2, 8, 17, ImageBuffer_COLOR_RED);
+  Graphics_draw_line(e->image.frames[0], 0, 8, 16, 8, ImageBuffer_COLOR_RED);
+  Graphics_draw_line(e->image.frames[0], 0, 12, 16, 12, ImageBuffer_COLOR_RED);
   return 0;
 }
 
