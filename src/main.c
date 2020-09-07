@@ -1,5 +1,7 @@
 #include "camera.h"
 #include "entity.h"
+#include "event.h"
+#include "gamecontext.h"
 #include "graphics.h"
 #include "image_buffer.h"
 #include "map.h"
@@ -14,6 +16,20 @@
 
 #define FPS 60
 
+
+int local_movement_handler(Event_t ev, GameContext_t* ctx) {
+  EntityMoveEvent *move_event = (EntityMoveEvent*)&ev.data;
+  entity_id id = move_event->id;
+  int delta_x = move_event->delta_x;
+  int delta_y = move_event->delta_y;
+  Entity_t *e = Entity_get(ctx->entity_pool, id);
+  if (e == NULL) {
+    return -1;
+  }
+  e->position.x = e->position.x + delta_x;
+  e->position.y = e->position.y + delta_y;
+  return 0;
+}
 
 int main(int argc, char** argv) {
   OPEN_LOG("/tmp/terminal-land.log1");
@@ -48,7 +64,15 @@ int main(int argc, char** argv) {
   Camera_t *camera_ptr = (Camera_t*)(malloc(sizeof(Camera_t)));
   camera_ptr->x = 0;
   camera_ptr->y = 0;
-  
+
+  // Setup game context
+  GameContext_t ctx = {.map=map_ptr, .entity_pool=entity_pool_ptr};
+
+  // Initialize event handlers
+  EventBus_t event_bus;
+  event_bus.queue_top = 0;
+  EventBus_register_handler(&event_bus, ENTITY_MOVE, local_movement_handler);
+
   struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
 
   Entity_t *player = NULL;
@@ -81,31 +105,34 @@ int main(int argc, char** argv) {
     if (check_max_x != max_x || check_max_y != max_y)
       screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
 
+    EntityMoveEvent move_right_event = {.id=player->id, .delta_x=1, .delta_y=0};
+    EntityMoveEvent move_left_event = {.id=player->id, .delta_x=-1, .delta_y=0};
+    EntityMoveEvent move_up_event = {.id=player->id, .delta_x=0, .delta_y=1};
+    EntityMoveEvent move_down_event = {.id=player->id, .delta_x=0, .delta_y=-1};
+    Event_t ev;
+    ev.type = ENTITY_MOVE;
     switch(getch()) {
       case 'w':
-        player->position.y++;
-        camera_ptr->y++;
+        ev.data = (event)move_up_event;
+        EventBus_push(&event_bus, ev);
         break;
       case 's':
-        player->position.y--;
-        camera_ptr->y--;
+        ev.data = (event)move_down_event;
+        EventBus_push(&event_bus, ev);
         break;
       case 'a':
-        player->position.x--;
-        if (player->position.x < (camera_ptr->x - max_x / 4)) {
-          camera_ptr->x--;
-        }
+        ev.data = (event)move_left_event;
+        EventBus_push(&event_bus, ev);
         break;
       case 'd':
-        player->position.x++;
-        if (player->position.x > (camera_ptr->x + max_x / 4)) {
-          camera_ptr->x++;
-        }
+        ev.data = (event)move_right_event;
+        EventBus_push(&event_bus, ev);
         break;
       case 'q':
         running = false;
         break;
     }
+    EventBus_handle_events(&event_bus, &ctx);
     Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
     Graphics_blit(screen_ptr);
     refresh();
