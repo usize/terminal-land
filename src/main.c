@@ -149,6 +149,7 @@ int main(int argc, char** argv) {
     EventBus_handle_events(&event_bus, &ctx);
 
     // Rendering.
+    Camera_follow(camera_ptr, player);
     Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
     Graphics_blit(screen_ptr);
     refresh();

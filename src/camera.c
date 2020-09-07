@@ -61,3 +61,15 @@ void Camera_draw(const Camera_t *c, const Map_t *m, EntityPool_t *ep, ImageBuffe
   }
   EntityPool_clear_iterator(ep);
 }
+
+void Camera_follow(Camera_t *c, const Entity_t *e) {
+  if (c->x > e->position.x) {
+    while ((c->x - e->position.x) > FOLLOW_LAG) {
+      c->x--;
+    }  
+  } else {
+    while ((e->position.x - c->x) > FOLLOW_LAG) {
+      c->x++; 
+    }
+  }
+}
