@@ -5,7 +5,8 @@
 #include "map.h"
 #include "image_buffer.h"
 
-#define FOLLOW_LAG 35
+#define FOLLOW_LAG_X 35
+#define FOLLOW_LAG_Y 10
 
 typedef struct {
   int x;

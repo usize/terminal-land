@@ -64,12 +64,21 @@ void Camera_draw(const Camera_t *c, const Map_t *m, EntityPool_t *ep, ImageBuffe
 
 void Camera_follow(Camera_t *c, const Entity_t *e) {
   if (c->x > e->position.x) {
-    while ((c->x - e->position.x) > FOLLOW_LAG) {
+    while ((c->x - e->position.x) > FOLLOW_LAG_X) {
       c->x--;
     }  
   } else {
-    while ((e->position.x - c->x) > FOLLOW_LAG) {
+    while ((e->position.x - c->x) > FOLLOW_LAG_X) {
       c->x++; 
+    }
+  }
+  if (c->y > e->position.y) {
+    while ((c->y - e->position.y) > FOLLOW_LAG_Y) {
+      c->y--;
+    }  
+  } else {
+    while ((e->position.y - c->y) > FOLLOW_LAG_Y) {
+      c->y++; 
     }
   }
 }
