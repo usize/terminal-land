@@ -4,17 +4,30 @@
 #include "gamecontext.h"
 #include "graphics.h"
 #include "image_buffer.h"
-#include "map.h"
 #include "logging.h"
+#include "map.h"
+#include "networking.h"
 
 #include "ncurses.h"
 
+#include "fcntl.h"
 #include "math.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
+#include "strings.h"
 #include "time.h"
 
+/* client includes */
+
+#include <netdb.h> 
+#include <sys/socket.h> 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "unistd.h"
+#define SA struct sockaddr 
+#define MAX_MSG_SIZE 4096
+#define PORT 8080 
 #define FPS 60
 
 
@@ -51,37 +64,107 @@ typedef enum {
   CLIENT_MODE,
   SERVER_MODE
 } runmode;
-
+  
+char msg_buff[MAX_MSG_SIZE]; 
 int main(int argc, char** argv) {
   runmode mode = LOCAL_MODE;
   if (argc > 1) {
-    if (strncmp(argv[1], "server", 6)) {
+    if (strncmp(argv[1], "server", 6) >= 0) {
       mode = SERVER_MODE; 
-    }
-    if (strncmp(argv[1], "client", 6)) {
+    } else if (strncmp(argv[1], "client", 6) >= 0) {
       mode = CLIENT_MODE; 
     }
   }
 
-  bool running = true;
-  /* CLIENT MODE */
-  while (mode == CLIENT_MODE && running) {
-  
-  }
-  if (mode == CLIENT_MODE) {
-    return 0;
-  }
 
   /* SERVER MODE */
-  while (mode == SERVER_MODE && running) {
-  
-  }
   if (mode == SERVER_MODE) {
+    
+    // NEVER ENDING MOVE COMMANDS FOR TESTING 
+    Event_t ev;
+    EntityMoveEvent move_right_event = {.id=1, .delta_x=1, .delta_y=0};
+    ev.type = ENTITY_MOVE;
+    ev.data = (event)move_right_event;
+    Message_t msg = Networking_serialize_event(ev);
+
+    int sockfd, connfd, len; 
+    struct sockaddr_in servaddr, cli; 
+  
+    // socket create and verification 
+    sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+    if (sockfd == -1) { 
+        printf("socket creation failed...\n"); 
+        exit(0); 
+    } 
+    else
+        printf("Socket successfully created..\n"); 
+    bzero(&servaddr, sizeof(servaddr)); 
+  
+    // assign IP, PORT 
+    servaddr.sin_family = AF_INET; 
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY); 
+    servaddr.sin_port = htons(PORT); 
+ 
+    int flag = 1;  
+    if (-1 == setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag))) {  
+      perror("setsockopt fail");  
+    }  
+
+    // Binding newly created socket to given IP and verification 
+    if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) { 
+        printf("socket bind failed...\n"); 
+        exit(0); 
+    } 
+  
+    // Now server is ready to listen and verification 
+    if ((listen(sockfd, 5)) != 0) { 
+        printf("Listen failed...\n"); 
+        exit(0); 
+    } 
+    len = sizeof(cli); 
+  
+    // Accept the data packet from client and verification 
+    connfd = accept(sockfd, (SA*)&cli, &len); 
+    if (connfd < 0) { 
+        printf("server acccept failed...\n"); 
+        exit(0); 
+    } 
+  
+    // Function for chatting between client and server 
+    char buff[MAX_MSG_SIZE]; 
+    int n; 
+    struct timespec waittime = {.tv_sec = 1, .tv_nsec = 999999999 / FPS};
+    for (;;) { 
+        //bzero(buff, sizeof(buff)); 
+  
+        // read the message from client and copy it in buffer 
+        //read(sockfd, buff, sizeof(buff)); 
+        // print buffer which contains the client contents 
+        //printf("From client: %s\t To client : ", buff); 
+        //bzero(buff, sizeof(buff)); 
+        //n = 0; 
+        // copy server message in the buffer 
+        //while ((buff[n++] = getchar()) != '\n') 
+        //    ; 
+  
+        // and send that buffer to client
+        ssize_t n_bytes = write(connfd, &msg, msg.size);
+        printf("bytes written: %lu\n", n_bytes);
+  
+        // if msg contains "Exit" then server exit and chat ended. 
+        //if (strncmp("exit", buff, 4) == 0) { 
+        //    printf("Server Exit...\n"); 
+        //    break; 
+        //}
+        nanosleep(&waittime, NULL);
+    } 
+  
+    // After chatting close the socket 
+    close(sockfd); 
     return 0;
   }
 
-  /* LOCAL MODE */
-  OPEN_LOG("/tmp/terminal-land.log1");
+  // Outside of server mode we'll need a graphical interface.
 
   // Setup our ncurses screen
   initscr();
@@ -125,10 +208,119 @@ int main(int argc, char** argv) {
   EventBus_register_handler(&event_bus, ENTITY_CREATE, local_create_entity_handler);
   EventBus_register_handler(&event_bus, ENTITY_MOVE, local_movement_handler);
 
+  // start and stop the game loop.
+  bool running = true;
+  /* CLIENT MODE */
+  if (mode == CLIENT_MODE) {
+  
+    int sockfd; 
+    struct sockaddr_in servaddr; 
+  
+    // socket create and varification 
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) { 
+        printf("socket creation failed...\n"); 
+        exit(0); 
+    } 
+  
+    // assign IP, PORT 
+    servaddr.sin_family = AF_INET; 
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
+    servaddr.sin_port = htons(PORT); 
+  
+    // connect the client socket to server socket 
+    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
+        printf("connection with the server failed...\n"); 
+        exit(0); 
+    } 
+  fcntl(sockfd, F_SETFL, O_NONBLOCK);
+
   Event_t ev;
   EntityCreateEvent create_entity_event = {};
   ev.type = ENTITY_CREATE;
   ev.data = (event)create_entity_event;
+  EventBus_push(&event_bus, ev);
+  EventBus_push(&event_bus, ev);
+  EventBus_handle_events(&event_bus, &ctx);
+  Entity_t *player = ctx.player;
+  if (player == NULL) {
+    return -99;
+  }
+
+  struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
+
+  // Networking buffer.
+  while (running) {
+    // Dynamic screen resizing.
+    int check_max_x, check_max_y = 0;
+    getmaxyx(stdscr, check_max_y, check_max_x);
+    if (check_max_x != max_x || check_max_y != max_y)
+      screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
+
+    // Input handling.
+    EntityMoveEvent move_right_event = {.id=player->id, .delta_x=1, .delta_y=0};
+    EntityMoveEvent move_left_event = {.id=player->id, .delta_x=-1, .delta_y=0};
+    EntityMoveEvent move_up_event = {.id=player->id, .delta_x=0, .delta_y=1};
+    EntityMoveEvent move_down_event = {.id=player->id, .delta_x=0, .delta_y=-1};
+    ev.type = ENTITY_MOVE;
+    switch(getch()) {
+      case 'w':
+        ev.data = (event)move_up_event;
+        EventBus_push(&event_bus, ev);
+        break;
+      case 's':
+        ev.data = (event)move_down_event;
+        EventBus_push(&event_bus, ev);
+        break;
+      case 'a':
+        ev.data = (event)move_left_event;
+        EventBus_push(&event_bus, ev);
+        break;
+      case 'd':
+        ev.data = (event)move_right_event;
+        EventBus_push(&event_bus, ev);
+        break;
+      case 'q':
+        running = false;
+        break;
+    }
+
+    // Check for network messages. 
+    int bytes_in = read(sockfd, msg_buff, sizeof(msg_buff));
+    if (bytes_in > 0) {
+      Message_t *msg = (Message_t*)msg_buff;
+      if (msg->type == EVENT) {
+        Event_t network_ev;
+        memcpy(&network_ev, msg->payload, sizeof(Event_t));
+        EventBus_push(&event_bus, network_ev);
+      }
+    }
+
+    // Event processing.
+    EventBus_handle_events(&event_bus, &ctx);
+
+    // Rendering.
+    Camera_follow(camera_ptr, player);
+    Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
+    Graphics_blit(screen_ptr);
+    refresh();
+    nanosleep(&waittime, NULL);
+		ImageBuffer_clear(screen_ptr);
+  }
+  
+  
+    // close the socket 
+    close(sockfd); 
+    return 0;
+  }
+
+  /* LOCAL MODE */
+
+  Event_t ev;
+  EntityCreateEvent create_entity_event = {};
+  ev.type = ENTITY_CREATE;
+  ev.data = (event)create_entity_event;
+  EventBus_push(&event_bus, ev);
   EventBus_push(&event_bus, ev);
   EventBus_handle_events(&event_bus, &ctx);
   Entity_t *player = ctx.player;
@@ -185,5 +377,4 @@ int main(int argc, char** argv) {
 		ImageBuffer_clear(screen_ptr);
   }
 
-  CLOSE_LOG();
 }

@@ -8,10 +8,6 @@
 
 typedef enum {
   NULL_EVENT,
-  // Request events are sent to a server on behalf of a client.
-  REQUEST_ENTITY_CREATE,
-  REQUEST_ENTITY_DESTROY,
-  REQUEST_ENTITY_MOVE,
   ENTITY_CREATE,
   ENTITY_DESTROY,
   ENTITY_MOVE,
