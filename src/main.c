@@ -51,11 +51,11 @@ int local_create_entity_handler(Event_t ev, GameContext_t* ctx) {
   if (ctx->player == NULL) {
     ctx->player = e;
   }
-  Graphics_draw_line(e->image.frames[0], 7, 8, 7, 17, ImageBuffer_COLOR_MAGENTA);
-  Graphics_draw_line(e->image.frames[0], 8, 8, 8, 17, ImageBuffer_COLOR_RED);
-  Graphics_draw_line(e->image.frames[0], 6, 8, 6, 17, ImageBuffer_COLOR_YELLOW);
-  Graphics_draw_line(e->image.frames[0], 5, 8, 5, 17, ImageBuffer_COLOR_GREEN);
-  Graphics_draw_line(e->image.frames[0], 4, 8, 4, 17, ImageBuffer_COLOR_CYAN);
+  Graphics_draw_line(e->image.frames[0], 7, 8, 7, 17, ImageBuffer_MAGENTA);
+  Graphics_draw_line(e->image.frames[0], 8, 8, 8, 17, ImageBuffer_RED);
+  Graphics_draw_line(e->image.frames[0], 6, 8, 6, 17, ImageBuffer_YELLOW);
+  Graphics_draw_line(e->image.frames[0], 5, 8, 5, 17, ImageBuffer_GREEN);
+  Graphics_draw_line(e->image.frames[0], 4, 8, 4, 17, ImageBuffer_CYAN);
   return 0;
 }
 
@@ -151,14 +151,14 @@ int main(int argc, char** argv) {
   timeout(1);
   curs_set(FALSE);
 
-  init_pair(ImageBuffer_COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
-  init_pair(ImageBuffer_COLOR_WHITE, COLOR_WHITE, COLOR_WHITE);
-  init_pair(ImageBuffer_COLOR_RED, COLOR_RED, COLOR_RED);
-  init_pair(ImageBuffer_COLOR_GREEN, COLOR_GREEN, COLOR_GREEN);        
-  init_pair(ImageBuffer_COLOR_BLUE, COLOR_BLUE, COLOR_BLUE);        
-  init_pair(ImageBuffer_COLOR_CYAN, COLOR_CYAN, COLOR_CYAN);
-  init_pair(ImageBuffer_COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA);
-  init_pair(ImageBuffer_COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW);
+  init_pair(ImageBuffer_BLACK, COLOR_BLACK, COLOR_BLACK);
+  init_pair(ImageBuffer_WHITE, COLOR_WHITE, COLOR_WHITE);
+  init_pair(ImageBuffer_RED, COLOR_RED, COLOR_RED);
+  init_pair(ImageBuffer_GREEN, COLOR_GREEN, COLOR_GREEN);        
+  init_pair(ImageBuffer_BLUE, COLOR_BLUE, COLOR_BLUE);        
+  init_pair(ImageBuffer_CYAN, COLOR_CYAN, COLOR_CYAN);
+  init_pair(ImageBuffer_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA);
+  init_pair(ImageBuffer_YELLOW, COLOR_YELLOW, COLOR_YELLOW);
 
   // Setup a main window
   int max_x, max_y = 0;

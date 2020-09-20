@@ -4,16 +4,16 @@
 static void _map_terrain_to_fb(const Map_t *m, int map_x, int map_y, ImageBuffer_t *fb, int fb_x, int fb_y) {
   switch (Map_get_data(m, map_x, map_y)) {
     case dirt:
-      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_YELLOW);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_YELLOW);
       break;
     case sky:
-      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_BLUE);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_BLUE);
       break;
     case grass:
-      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_GREEN);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_GREEN);
       break;
     default:
-      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_COLOR_WHITE);
+      ImageBuffer_set_pixel_with_color(fb, fb_x, fb_y, ImageBuffer_WHITE);
   }
 }
 

@@ -7,14 +7,14 @@
 
 // color codes
 
-#define ImageBuffer_COLOR_BLACK  0
-#define ImageBuffer_COLOR_WHITE  1
-#define ImageBuffer_COLOR_RED  2
-#define ImageBuffer_COLOR_GREEN  3
-#define ImageBuffer_COLOR_BLUE  4
-#define ImageBuffer_COLOR_CYAN  5
-#define ImageBuffer_COLOR_MAGENTA 6
-#define ImageBuffer_COLOR_YELLOW 7
+#define ImageBuffer_BLACK  0
+#define ImageBuffer_WHITE  1
+#define ImageBuffer_RED  2
+#define ImageBuffer_GREEN  3
+#define ImageBuffer_BLUE  4
+#define ImageBuffer_CYAN  5
+#define ImageBuffer_MAGENTA 6
+#define ImageBuffer_YELLOW 7
 
 
 typedef struct {
