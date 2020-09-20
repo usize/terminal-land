@@ -1,9 +1,10 @@
 #include "networking.h"
 
-Message_t Networking_serialize_event(Event_t ev) {
+Message_t Networking_new_message(message_payload_type type, 
+                                   void* payload,
+                                   size_t payload_size) {
   Message_t msg;
-  msg.size = sizeof(msg) + sizeof(ev);
-  msg.type = EVENT;
-  memcpy(&msg.payload, &ev, sizeof(ev));
+  msg.type = type;
+  memcpy(&msg.payload, payload, payload_size);
   return msg;
 }

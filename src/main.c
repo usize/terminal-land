@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     EntityMoveEvent move_right_event = {.id=1, .delta_x=1, .delta_y=0};
     ev.type = ENTITY_MOVE;
     ev.data = (event)move_right_event;
-    Message_t msg = Networking_serialize_event(ev);
+    Message_t msg = Networking_new_message(EVENT, &ev, sizeof(ev));
 
     int sockfd, connfd, len; 
     struct sockaddr_in servaddr, cli; 
@@ -130,36 +130,13 @@ int main(int argc, char** argv) {
         exit(0); 
     } 
   
-    // Function for chatting between client and server 
-    char buff[MAX_MSG_SIZE]; 
-    int n; 
     struct timespec waittime = {.tv_sec = 1, .tv_nsec = 999999999 / FPS};
     for (;;) { 
-        //bzero(buff, sizeof(buff)); 
-  
-        // read the message from client and copy it in buffer 
-        //read(sockfd, buff, sizeof(buff)); 
-        // print buffer which contains the client contents 
-        //printf("From client: %s\t To client : ", buff); 
-        //bzero(buff, sizeof(buff)); 
-        //n = 0; 
-        // copy server message in the buffer 
-        //while ((buff[n++] = getchar()) != '\n') 
-        //    ; 
-  
-        // and send that buffer to client
-        ssize_t n_bytes = write(connfd, &msg, msg.size);
+        ssize_t n_bytes = write(connfd, &msg, sizeof(msg));
         printf("bytes written: %lu\n", n_bytes);
-  
-        // if msg contains "Exit" then server exit and chat ended. 
-        //if (strncmp("exit", buff, 4) == 0) { 
-        //    printf("Server Exit...\n"); 
-        //    break; 
-        //}
         nanosleep(&waittime, NULL);
     } 
   
-    // After chatting close the socket 
     close(sockfd); 
     return 0;
   }
@@ -308,73 +285,9 @@ int main(int argc, char** argv) {
 		ImageBuffer_clear(screen_ptr);
   }
   
-  
-    // close the socket 
+    // Close the socket. 
     close(sockfd); 
     return 0;
-  }
-
-  /* LOCAL MODE */
-
-  Event_t ev;
-  EntityCreateEvent create_entity_event = {};
-  ev.type = ENTITY_CREATE;
-  ev.data = (event)create_entity_event;
-  EventBus_push(&event_bus, ev);
-  EventBus_push(&event_bus, ev);
-  EventBus_handle_events(&event_bus, &ctx);
-  Entity_t *player = ctx.player;
-  if (player == NULL) {
-    return -99;
-  }
-
-  struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
-
-  while (running) {
-    // Dynamic screen resizing.
-    int check_max_x, check_max_y = 0;
-    getmaxyx(stdscr, check_max_y, check_max_x);
-    if (check_max_x != max_x || check_max_y != max_y)
-      screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
-
-    // Input handling.
-    EntityMoveEvent move_right_event = {.id=player->id, .delta_x=1, .delta_y=0};
-    EntityMoveEvent move_left_event = {.id=player->id, .delta_x=-1, .delta_y=0};
-    EntityMoveEvent move_up_event = {.id=player->id, .delta_x=0, .delta_y=1};
-    EntityMoveEvent move_down_event = {.id=player->id, .delta_x=0, .delta_y=-1};
-    ev.type = ENTITY_MOVE;
-    switch(getch()) {
-      case 'w':
-        ev.data = (event)move_up_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 's':
-        ev.data = (event)move_down_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 'a':
-        ev.data = (event)move_left_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 'd':
-        ev.data = (event)move_right_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 'q':
-        running = false;
-        break;
-    }
-
-    // Event processing.
-    EventBus_handle_events(&event_bus, &ctx);
-
-    // Rendering.
-    Camera_follow(camera_ptr, player);
-    Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
-    Graphics_blit(screen_ptr);
-    refresh();
-    nanosleep(&waittime, NULL);
-		ImageBuffer_clear(screen_ptr);
   }
 
 }
