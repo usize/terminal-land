@@ -3,11 +3,11 @@
 void Graphics_blit(const ImageBuffer_t *fb) {
   for (int y = 0; y < fb->height; y++) {
     for (int x = 0; x < fb->width; x++) {
-      int c = fb->buffer[(y *fb->width) + x];
-			if (c < 0) continue;
-			attron(COLOR_PAIR(c));
-			mvaddch(y, x, ' ');
-			attroff(COLOR_PAIR(c));
+      ImageBufferPixel_t p = fb->buffer[(y *fb->width) + x];
+			if (p.colorcode < 0) continue;
+			attron(COLOR_PAIR(p.colorcode));
+			mvaddch(y, x, p.c);
+			attroff(COLOR_PAIR(p.colorcode));
     }
   }
 }
@@ -51,6 +51,14 @@ void Graphics_draw_line(ImageBuffer_t *fb, int x1, int y1, int x2, int y2, int c
   }
 }
 
+void Graphics_draw_text(ImageBuffer_t *fb, int x, int y, const char *text, int size) {
+  for (int i = 0; i < size; i++) {
+    char c = text[i];
+    if (c == '\0') break;
+    ImageBuffer_set_char(fb, x + i, y, c);
+  }
+}
+
 void Graphics_blit_to_ib(
     const ImageBuffer_t* from, ImageBuffer_t* to, int x_offset, int y_offset) {
   int start_at_x = x_offset;
@@ -69,8 +77,8 @@ void Graphics_blit_to_ib(
   int copied_height = end_at_y - start_at_y;
   for (int y = 0; y < copied_height; y++) {
     for (int x = 0; x < copied_width; x++) {
-      int v = from->buffer[(y * from->width) + x];
-      if (v > 0) to->buffer[((start_at_y + y) * to->width) + start_at_x + x] = v;
+      ImageBufferPixel_t p = from->buffer[(y * from->width) + x];
+      if (p.colorcode > 0) to->buffer[((start_at_y + y) * to->width) + start_at_x + x] = p;
     } 
   }
 }

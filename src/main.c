@@ -290,6 +290,7 @@ int main(int argc, char** argv) {
   init_pair(ImageBuffer_CYAN, COLOR_CYAN, COLOR_CYAN);
   init_pair(ImageBuffer_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA);
   init_pair(ImageBuffer_YELLOW, COLOR_YELLOW, COLOR_YELLOW);
+  init_pair(ImageBuffer_WHITE_ON_BLACK, COLOR_BLACK, COLOR_WHITE);
 
   // Setup a main window
   int max_x, max_y = 0;
@@ -392,6 +393,7 @@ int main(int argc, char** argv) {
     // Rendering.
     if (ctx.player != NULL) Camera_follow(camera_ptr, ctx.player);
     Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
+    Graphics_draw_text(screen_ptr, 1, 0, "press tab to switch between chat and movement mode", 80);
     Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&frametime, NULL);

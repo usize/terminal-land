@@ -6,7 +6,7 @@
 #include "stdlib.h"
 
 #define MAX_ENTITIES 256 
-#define MAX_IMAGE_SIZE 32
+#define MAX_IMAGE_SIZE 16
 #define MAX_IMAGE_FRAMES 8
 #define MAX_IMAGES 512
 

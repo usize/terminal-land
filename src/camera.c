@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "logging.h"
 
 static void _map_terrain_to_fb(const Map_t *m, int map_x, int map_y, ImageBuffer_t *fb, int fb_x, int fb_y) {
   switch (Map_get_data(m, map_x, map_y)) {
@@ -35,28 +34,22 @@ void Camera_draw(const Camera_t *c, const Map_t *m, EntityPool_t *ep, ImageBuffe
     } 
   }
 
-  bool write_log = false;
   EntityPool_clear_iterator(ep);
   for (Entity_t *e = EntityPool_iterator(ep); e != NULL; e = EntityPool_iterator(ep)) {
     if (e->position.x >= from_x &&
         e->position.x <= to_x &&
         e->position.y >= from_y &&
         e->position.y <= to_y) {
-      if (write_log) {
-        char ll[2048];
-        sprintf(
-            (char *)&ll, 
-            "from_x: %i from_y %i e_x: %i e_y: %i\n", 
-            from_x, from_y, e->position.x, e->position.y);
-        LOG(ll);
-        write_log = false;
-      }
       Graphics_blit_to_ib(
           ep->images[e->image.ids[0]],
           fb, 
           e->position.x - from_x,
           // The map and imagebuffer are flipped relative to one another. 
-          to_y - e->position.y); 
+          to_y - e->position.y);
+
+      char label[14];
+      sprintf(label, " entity: %i ", e->id);
+      Graphics_draw_text(fb, e->position.x - from_x, to_y - e->position.y, label, 12);
     }
   }
   EntityPool_clear_iterator(ep);

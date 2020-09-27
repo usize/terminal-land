@@ -10,7 +10,7 @@ entity_id Entity_create(EntityPool_t *ep) {
       e->id = ep->nonce;
       e->destroyed = false;
       e->position.x = 0;
-      e->position.y = MAX_IMAGE_SIZE >> 1;
+      e->position.y = MAX_IMAGE_SIZE;
       e->image.framecount = 0;
       e->image.current_frame = 0;
       e->image.ids[0] = 0;
@@ -60,11 +60,11 @@ EntityPool_t* EntityPool_create() {
     ep->entities[i].id = -1;
   }
   ImageBuffer_t* default_img = ImageBuffer_new(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
-  Graphics_draw_line(default_img, 7, 8, 7, 17, ImageBuffer_MAGENTA);
-  Graphics_draw_line(default_img, 8, 8, 8, 17, ImageBuffer_RED);
-  Graphics_draw_line(default_img, 6, 8, 6, 17, ImageBuffer_YELLOW);
-  Graphics_draw_line(default_img, 5, 8, 5, 17, ImageBuffer_GREEN);
-  Graphics_draw_line(default_img, 4, 8, 4, 17, ImageBuffer_CYAN);
+  Graphics_draw_line(default_img, 7, 0, 7, MAX_IMAGE_SIZE, ImageBuffer_MAGENTA);
+  Graphics_draw_line(default_img, 8, 0, 8, MAX_IMAGE_SIZE, ImageBuffer_RED);
+  Graphics_draw_line(default_img, 6, 0, 6, MAX_IMAGE_SIZE, ImageBuffer_YELLOW);
+  Graphics_draw_line(default_img, 5, 0, 5, MAX_IMAGE_SIZE, ImageBuffer_GREEN);
+  Graphics_draw_line(default_img, 4, 0, 4, MAX_IMAGE_SIZE, ImageBuffer_CYAN);
   ep->images[0] = default_img; 
   return ep;
 }

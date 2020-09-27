@@ -7,7 +7,19 @@ void static _set_pixel(ImageBuffer_t *fb, int x, int y, int colorcode) {
   if (y < 0 || y >= fb->height) {
     return;
   }
-	fb->buffer[(y * fb->width) + x] = colorcode;
+  ImageBufferPixel_t p = {.colorcode=colorcode, .c=' '};
+	fb->buffer[(y * fb->width) + x] = p;
+}
+
+void ImageBuffer_set_char(ImageBuffer_t *fb, int x, int y, char c) {
+  if (x < 0 || x >= fb->width) {
+    return;
+  }
+  if (y < 0 || y >= fb->height) {
+    return;
+  }
+  ImageBufferPixel_t p = {.colorcode=ImageBuffer_WHITE_ON_BLACK, .c=c};
+	fb->buffer[(y * fb->width) + x] = p;
 }
 
 void ImageBuffer_set_pixel(ImageBuffer_t *fb, int x, int y) {
@@ -19,18 +31,19 @@ void ImageBuffer_set_pixel_with_color(ImageBuffer_t *fb, int x, int y, int color
 }
 
 void ImageBuffer_unset_pixel(ImageBuffer_t *fb, int x, int y) {
-  fb->buffer[(y * fb->width) + x] = -1;
+  ImageBufferPixel_t p = {.colorcode=-1, .c=' '};
+  fb->buffer[(y * fb->width) + x] = p;
 }
 
 void ImageBuffer_clear(ImageBuffer_t *fb) {
-	memset(fb->buffer, -1, sizeof(int) * fb->width * fb->height);
+	memset(fb->buffer, -1, sizeof(ImageBufferPixel_t) * fb->width * fb->height);
 }
 
 ImageBuffer_t* ImageBuffer_new(int width, int height) {
   ImageBuffer_t *fb = (ImageBuffer_t*)malloc(sizeof(*fb));
   fb->width = width;
   fb->height = height;
-  fb->buffer = (int *)malloc(sizeof(int) * width * height);
+  fb->buffer = (ImageBufferPixel_t *)malloc(sizeof(ImageBufferPixel_t) * width * height);
 	ImageBuffer_clear(fb);	
   return fb;
 }
