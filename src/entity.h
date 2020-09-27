@@ -25,6 +25,7 @@ typedef struct{
 
 typedef struct {
   entity_id id;
+  bool player;
   bool destroyed;
   PositionComponent_t position;
   ImageComponent_t image;

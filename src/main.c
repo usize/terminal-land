@@ -49,9 +49,7 @@ int local_load_entity_handler(Event_t ev, GameContext_t* ctx) {
   EntityLoadEvent *el = (EntityLoadEvent*)(&ev.data);
   Entity_t e = el->entity;
   EntityPool_push(ctx->entity_pool, e);
-  if (ctx->player == NULL) {
-    ctx->player = Entity_get(ctx->entity_pool, e.id);
-  }
+  if (e.player) ctx->player = Entity_get(ctx->entity_pool, e.id);
   return 0;
 }
 
@@ -161,8 +159,9 @@ int main(int argc, char** argv) {
         // Create a new entity and send it to the client.
         entity_id e_id = Entity_create(entity_pool_ptr);
         Entity_t *new_e = Entity_get(entity_pool_ptr, e_id);
-       
+        
         EntityLoadEvent entity_load_event = {.entity=*new_e};
+        entity_load_event.entity.player = true;
         Event_t ev;
         ev.type = ENTITY_LOAD;
         ev.data = (event)entity_load_event;
@@ -172,6 +171,9 @@ int main(int argc, char** argv) {
         write(new_clientfd, (char*)&msg_out, sizeof(msg_out));
         printf("created new entity %i for client %i \n", new_e->id, new_clientfd);
         
+        entity_load_event.entity.player = false;
+        ev.data = (event)entity_load_event;
+        memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
         // Send the message to all the other clients
         for (int i = 0; i < MAX_CLIENTS; i++) {
           int fd = clientfds[i];

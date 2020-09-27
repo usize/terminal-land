@@ -6,6 +6,7 @@ entity_id Entity_create(EntityPool_t *ep) {
     if (e->id < 0 || e->destroyed) {
       // Always give recycled destroyed entities a new id. 
       while ((ep->nonce % MAX_ENTITIES) != i) ep->nonce++;
+      e->player = false;
       e->id = ep->nonce;
       e->destroyed = false;
       e->position.x = 0;
