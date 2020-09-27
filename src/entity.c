@@ -11,18 +11,18 @@ entity_id Entity_create(EntityPool_t *ep) {
       e->position.x = 0;
       e->position.y = MAX_IMAGE_SIZE >> 1;
       e->image.framecount = 0;
+      e->image.current_frame = 0;
+      e->image.ids[0] = 0;
       ep->nonce++;
-      for (int j = 0; j < MAX_IMAGE_FRAMES; j++) {
-        if (e->image.frames[j] != NULL) {
-          ImageBuffer_clear(e->image.frames[j]);
-        } else {
-          e->image.frames[j] = ImageBuffer_new(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
-        } 
-      }
       return e->id;
     } 
   }
   return -1;
+}
+
+void EntityPool_push(EntityPool_t *ep, const Entity_t e) {
+  entity_id id = e.id;
+  memcpy(&ep->entities[id % MAX_ENTITIES], &e, sizeof(e));
 }
 
 Entity_t* Entity_get(EntityPool_t *ep, entity_id id) {
@@ -58,17 +58,19 @@ EntityPool_t* EntityPool_create() {
   for (int i = 0; i < MAX_ENTITIES; i++) {
     ep->entities[i].id = -1;
   }
+  ImageBuffer_t* default_img = ImageBuffer_new(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
+  Graphics_draw_line(default_img, 7, 8, 7, 17, ImageBuffer_MAGENTA);
+  Graphics_draw_line(default_img, 8, 8, 8, 17, ImageBuffer_RED);
+  Graphics_draw_line(default_img, 6, 8, 6, 17, ImageBuffer_YELLOW);
+  Graphics_draw_line(default_img, 5, 8, 5, 17, ImageBuffer_GREEN);
+  Graphics_draw_line(default_img, 4, 8, 4, 17, ImageBuffer_CYAN);
+  ep->images[0] = default_img; 
   return ep;
 }
 
 void EntityPool_destroy(EntityPool_t *ep) {
-  EntityPool_clear_iterator(ep);
-  for (Entity_t *e = EntityPool_iterator(ep); e != NULL; e = EntityPool_iterator(ep)) {
-    for (int j = 0; j < MAX_IMAGE_FRAMES; j++) {
-      if (e->image.frames[j] != NULL) {
-        free(e->image.frames[j]);
-      }
-    }
+  for (int i = 0; i < MAX_IMAGES; i++) {
+    if (ep->images[i] != NULL) free(ep->images[i]); 
   }
   free(ep);
 }

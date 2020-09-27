@@ -30,8 +30,7 @@ ImageBuffer_t* ImageBuffer_new(int width, int height) {
   ImageBuffer_t *fb = (ImageBuffer_t*)malloc(sizeof(*fb));
   fb->width = width;
   fb->height = height;
-	int buffer[height * width * 2];
-  fb->buffer = (int *)&buffer;
+  fb->buffer = (int *)malloc(sizeof(int) * width * height);
 	ImageBuffer_clear(fb);	
   return fb;
 }

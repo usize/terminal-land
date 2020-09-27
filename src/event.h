@@ -9,11 +9,16 @@
 typedef enum {
   NULL_EVENT,
   ENTITY_CREATE,
+  ENTITY_LOAD,
   ENTITY_DESTROY,
   ENTITY_MOVE,
 } event_type;
 
 typedef struct {} EntityCreateEvent;
+
+typedef struct {
+  Entity_t entity;
+} EntityLoadEvent;
 
 typedef struct {
   entity_id id;
@@ -32,6 +37,7 @@ typedef struct {
 
 typedef union {
   EntityCreateEvent entity_create;
+  EntityLoadEvent entity_load;
   EntityDestroyEvent entity_destroy;
   EntityMoveEvent entity_move;
 } event;

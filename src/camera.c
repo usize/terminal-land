@@ -52,7 +52,7 @@ void Camera_draw(const Camera_t *c, const Map_t *m, EntityPool_t *ep, ImageBuffe
         write_log = false;
       }
       Graphics_blit_to_ib(
-          e->image.frames[0],
+          ep->images[e->image.ids[0]],
           fb, 
           e->position.x - from_x,
           // The map and imagebuffer are flipped relative to one another. 

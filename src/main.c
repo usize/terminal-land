@@ -45,17 +45,13 @@ int local_movement_handler(Event_t ev, GameContext_t* ctx) {
   return 0;
 }
 
-int local_create_entity_handler(Event_t ev, GameContext_t* ctx) {
-  entity_id id = Entity_create(ctx->entity_pool);
-  Entity_t *e = Entity_get(ctx->entity_pool, id);
+int local_load_entity_handler(Event_t ev, GameContext_t* ctx) {
+  EntityLoadEvent *el = (EntityLoadEvent*)(&ev.data);
+  Entity_t e = el->entity;
+  EntityPool_push(ctx->entity_pool, e);
   if (ctx->player == NULL) {
-    ctx->player = e;
+    ctx->player = Entity_get(ctx->entity_pool, e.id);
   }
-  Graphics_draw_line(e->image.frames[0], 7, 8, 7, 17, ImageBuffer_MAGENTA);
-  Graphics_draw_line(e->image.frames[0], 8, 8, 8, 17, ImageBuffer_RED);
-  Graphics_draw_line(e->image.frames[0], 6, 8, 6, 17, ImageBuffer_YELLOW);
-  Graphics_draw_line(e->image.frames[0], 5, 8, 5, 17, ImageBuffer_GREEN);
-  Graphics_draw_line(e->image.frames[0], 4, 8, 4, 17, ImageBuffer_CYAN);
   return 0;
 }
 
@@ -64,8 +60,10 @@ typedef enum {
   CLIENT_MODE,
   SERVER_MODE
 } runmode;
-  
-char msg_buf[sizeof(Message_t) * 2]; 
+ 
+// Networking buffer
+char msg_buf[sizeof(Message_t) * 10];
+
 int main(int argc, char** argv) {
   runmode mode = NO_MODE;
   if (argc > 1) {
@@ -82,7 +80,12 @@ int main(int argc, char** argv) {
 
   /* SERVER MODE */
   if (mode == SERVER_MODE) {
-    
+   
+    // GAME STATE
+    // Setup entities.
+    EntityPool_t *entity_pool_ptr = EntityPool_create();
+
+    // NETWORKING
     int serverfd;
     int clientfds[MAX_CLIENTS] = {0};
     struct sockaddr_in server_addr, client_addr; 
@@ -150,8 +153,54 @@ int main(int argc, char** argv) {
             break; 
           }
         }
+      
+        
+        // TODO: We need a handshake for clients so they know which entity is
+        // theirs we can't depend on ordering....
+
+        // Create a new entity and send it to the client.
+        entity_id e_id = Entity_create(entity_pool_ptr);
+        Entity_t *new_e = Entity_get(entity_pool_ptr, e_id);
+       
+        EntityLoadEvent entity_load_event = {.entity=*new_e};
+        Event_t ev;
+        ev.type = ENTITY_LOAD;
+        ev.data = (event)entity_load_event;
+        Message_t msg_out;
+        msg_out.type = MSG_EVENT;
+        memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+        write(new_clientfd, (char*)&msg_out, sizeof(msg_out));
+        printf("created new entity %i for client %i \n", new_e->id, new_clientfd);
+        
+        // Send the message to all the other clients
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+          int fd = clientfds[i];
+          if (fd > 0 && fd != new_clientfd) {
+            write(fd, (char*)&msg_out, sizeof(msg_out)); 
+            printf("sent entity %i to client %i \n", new_e->id, fd);
+          }
+        }
+        
+        // Send over all of the other entities to the client.
+        EntityPool_clear_iterator(entity_pool_ptr);
+        for (Entity_t *e = EntityPool_iterator(entity_pool_ptr); 
+             e != NULL; e = EntityPool_iterator(entity_pool_ptr)) {
+          
+          if (e->id == new_e->id) continue;
+          entity_load_event.entity = *e; 
+          ev.type = ENTITY_LOAD;
+          ev.data = (event)entity_load_event;
+          msg_out.type = MSG_EVENT;
+          memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+          write(new_clientfd, (char*)&msg_out, sizeof(msg_out));
+          printf("sent entity %i to client %i \n", e->id, new_clientfd);
+        }
       }
 
+      // TODO: This entire networking section is borked because I don't know how
+      // many messages I'm sending. I need to add a small header so I know this
+      // up front........
+      
       // Handle clients sending data
       for (int i = 0; i < MAX_CLIENTS; i++) {
         int clientfd = clientfds[i];
@@ -165,8 +214,8 @@ int main(int argc, char** argv) {
           // Send the message to all the other clients
           for (int i = 0; i < MAX_CLIENTS; i++) {
             int fd = clientfds[i];
-            if (fd > 0 && fd != clientfd) {
-              write(fd, msg_buf, sizeof(msg_buf)); 
+            if (fd > 0) {// && fd != clientfd) {
+              write(fd, msg_buf, sizeof(Message_t)); 
             }
           }
         } 
@@ -178,7 +227,50 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  // Outside of server mode we'll need a graphical interface.
+  // CLIENT MODE
+  
+  int serverfd; 
+  struct sockaddr_in server_addr; 
+
+  // socket create and varification 
+  serverfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (serverfd == -1) { 
+      printf("socket creation failed...\n"); 
+      exit(0); 
+  } 
+  
+  // assign IP, SERVER_PORT 
+  server_addr.sin_family = AF_INET; 
+  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
+  server_addr.sin_port = htons(SERVER_PORT); 
+
+  // connect the client socket to server socket 
+  if (connect(serverfd, (SA*)&server_addr, sizeof(server_addr)) != 0) { 
+      printf("connection with the server failed...\n"); 
+      exit(0); 
+  } 
+  fcntl(serverfd, F_SETFL, O_NONBLOCK);
+
+
+  // Setup entities.
+  EntityPool_t *entity_pool_ptr = EntityPool_create();
+
+  // Setup map and camera
+  Map_t *map_ptr = Map_new();
+
+  // Setup game context
+  GameContext_t ctx = {.map=map_ptr, .entity_pool=entity_pool_ptr, .player=NULL};
+
+  // Setup camera.
+  Camera_t *camera_ptr = (Camera_t*)(malloc(sizeof(Camera_t)));
+  camera_ptr->x = 0;
+  camera_ptr->y = 0;
+
+  // Initialize event handlers
+  EventBus_t event_bus;
+  event_bus.queue_top = 0;
+  EventBus_register_handler(&event_bus, ENTITY_LOAD, local_load_entity_handler);
+  EventBus_register_handler(&event_bus, ENTITY_MOVE, local_movement_handler);
 
   // Setup our ncurses screen
   initscr();
@@ -202,122 +294,109 @@ int main(int argc, char** argv) {
   getmaxyx(stdscr, max_y, max_x);
   ImageBuffer_t *screen_ptr = ImageBuffer_new(max_x, max_y);
 
-  // Setup entities.
-  EntityPool_t *entity_pool_ptr = EntityPool_create();
 
-  // Setup map and camera
-  Map_t *map_ptr = Map_new();
+  // A shared event struct for any outgoing event messages.
+  Event_t ev;
 
-  // Setup game context
-  GameContext_t ctx = {.map=map_ptr, .entity_pool=entity_pool_ptr, .player=NULL};
+  // A single message struct for sending messages to the server.
+  Message_t msg_out = {0};
+  msg_out.type = MSG_EVENT;
 
-  // Setup camera.
-  Camera_t *camera_ptr = (Camera_t*)(malloc(sizeof(Camera_t)));
-  camera_ptr->x = 0;
-  camera_ptr->y = 0;
-
-  // Initialize event handlers
-  EventBus_t event_bus;
-  event_bus.queue_top = 0;
-  EventBus_register_handler(&event_bus, ENTITY_CREATE, local_create_entity_handler);
-  EventBus_register_handler(&event_bus, ENTITY_MOVE, local_movement_handler);
+  struct timespec frametime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
 
   // start and stop the game loop.
   bool running = true;
-  /* CLIENT MODE */
-  if (mode == CLIENT_MODE) {
-  
-    int serverfd; 
-    struct sockaddr_in server_addr; 
-  
-    // socket create and varification 
-    serverfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverfd == -1) { 
-        printf("socket creation failed...\n"); 
-        exit(0); 
-    } 
-  
-    // assign IP, SERVER_PORT 
-    server_addr.sin_family = AF_INET; 
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
-    server_addr.sin_port = htons(SERVER_PORT); 
-  
-    // connect the client socket to server socket 
-    if (connect(serverfd, (SA*)&server_addr, sizeof(server_addr)) != 0) { 
-        printf("connection with the server failed...\n"); 
-        exit(0); 
-    } 
-    fcntl(serverfd, F_SETFL, O_NONBLOCK);
+  while (running) {
+    // Dynamic screen resizing.
+    int check_max_x, check_max_y = 0;
+    getmaxyx(stdscr, check_max_y, check_max_x);
+    if (check_max_x != max_x || check_max_y != max_y)
+      screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
 
-    Event_t ev;
-    EntityCreateEvent create_entity_event = {};
-    ev.type = ENTITY_CREATE;
-    ev.data = (event)create_entity_event;
-    EventBus_push(&event_bus, ev);
-    EventBus_push(&event_bus, ev);
-    EventBus_handle_events(&event_bus, &ctx);
-    Entity_t *player = ctx.player;
-    if (player == NULL) {
-      return -99;
+    // Input handling.
+    char input_c = getch(); 
+    
+    ev.type = ENTITY_MOVE;
+    if (ctx.player != NULL && input_c == 'd') {
+      EntityMoveEvent move_right_event = {
+        .id=ctx.player->id, 
+        .from_x=ctx.player->position.x, 
+        .from_y=ctx.player->position.y,
+        .to_x=ctx.player->position.x + 1, 
+        .to_y=ctx.player->position.y,
+      };
+      ev.data = (event)move_right_event;
+      memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+      write(serverfd, (char*)&msg_out, sizeof(msg_out));
+      //EventBus_push(&event_bus, ev);
+    } else if (ctx.player != NULL && input_c == 'a') {
+      EntityMoveEvent move_right_event = {
+        .id=ctx.player->id, 
+        .from_x=ctx.player->position.x, 
+        .from_y=ctx.player->position.y,
+        .to_x=ctx.player->position.x - 1, 
+        .to_y=ctx.player->position.y,
+      };
+      ev.data = (event)move_right_event;
+      memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+      write(serverfd, (char*)&msg_out, sizeof(msg_out));
+      //EventBus_push(&event_bus, ev);
+    } else if (ctx.player != NULL && input_c == 'w') {
+      EntityMoveEvent move_right_event = {
+        .id=ctx.player->id, 
+        .from_x=ctx.player->position.x, 
+        .from_y=ctx.player->position.y,
+        .to_x=ctx.player->position.x, 
+        .to_y=ctx.player->position.y + 1,
+      };
+      ev.data = (event)move_right_event;
+      memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+      write(serverfd, (char*)&msg_out, sizeof(msg_out));
+      //EventBus_push(&event_bus, ev);
+    } else if (ctx.player != NULL && input_c == 's') {
+      EntityMoveEvent move_right_event = {
+        .id=ctx.player->id, 
+        .from_x=ctx.player->position.x, 
+        .from_y=ctx.player->position.y,
+        .to_x=ctx.player->position.x, 
+        .to_y=ctx.player->position.y - 1,
+      };
+      ev.data = (event)move_right_event;
+      memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+      write(serverfd, (char*)&msg_out, sizeof(msg_out));
+      //EventBus_push(&event_bus, ev);
     }
 
-    struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
 
-    // A single message struct for sending messages to the server.
-    Message_t msg_out = {0};
-    msg_out.type = MSG_EVENT;
-
-    // Networking buffer.
-    while (running) {
-      // Dynamic screen resizing.
-      int check_max_x, check_max_y = 0;
-      getmaxyx(stdscr, check_max_y, check_max_x);
-      if (check_max_x != max_x || check_max_y != max_y)
-        screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
-
-      // Input handling.
-      char input_c = getch(); 
-      
-      ev.type = ENTITY_MOVE;
-      if (input_c == 'd') {
-        EntityMoveEvent move_right_event = {
-          .id=player->id, 
-          .from_x=player->position.x, 
-          .from_y=player->position.y,
-          .to_x=player->position.x + 1, 
-          .to_y=player->position.y,
-        };
-        ev.data = (event)move_right_event;
-        memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
-        write(serverfd, (char*)&msg_out, sizeof(msg_out));
-        EventBus_push(&event_bus, ev);
-      }
-
-      // Check for network messages. 
-      int bytes_in = read(serverfd, msg_buf, sizeof(msg_buf));
-      if (bytes_in > 0) {
-        Message_t *msg = (Message_t*)msg_buf;
+    // Check for network messages. 
+    int bytes_in = read(serverfd, msg_buf, sizeof(msg_buf));
+    int msg_size = sizeof(Message_t);
+    char buf[msg_size];
+    for (int i = 0; i < bytes_in; i++) {
+      buf[i % msg_size] = msg_buf[i];
+      if (((i + 1) % msg_size) == 0) {
+        Message_t *msg = (Message_t*)&buf;
         if (msg->type == MSG_EVENT) {
           Event_t network_ev;
           memcpy(&network_ev, msg->payload, sizeof(Event_t));
           EventBus_push(&event_bus, network_ev);
         }
       }
-
-      // Event processing.
-      EventBus_handle_events(&event_bus, &ctx);
-
-      // Rendering.
-      Camera_follow(camera_ptr, player);
-      Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
-      Graphics_blit(screen_ptr);
-      refresh();
-      nanosleep(&waittime, NULL);
-      ImageBuffer_clear(screen_ptr);
     }
-  
-    // Close the socket. 
-    close(serverfd); 
-    return 0;
+
+    // Event processing.
+    EventBus_handle_events(&event_bus, &ctx);
+
+    // Rendering.
+    if (ctx.player != NULL) Camera_follow(camera_ptr, ctx.player);
+    Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
+    Graphics_blit(screen_ptr);
+    refresh();
+    nanosleep(&frametime, NULL);
+    ImageBuffer_clear(screen_ptr);
   }
+  
+  // Close the socket. 
+  close(serverfd); 
+  return 0;
 }
