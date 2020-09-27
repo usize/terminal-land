@@ -21,8 +21,13 @@ typedef struct {
 
 typedef struct {
   entity_id id;
-  int delta_x;
-  int delta_y;
+  // It's useful to teleport entities instead of using a delta 
+  // in order to keep multiplayer synced. The {from,to}_{x, y}
+  // values can be used for collision detection and other sanity checks.
+  int from_x;
+  int from_y;
+  int to_x;
+  int to_y;
 } EntityMoveEvent;
 
 typedef union {

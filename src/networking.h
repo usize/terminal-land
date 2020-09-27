@@ -7,8 +7,8 @@
 #define MAX_PAYLOAD_SIZE 512
 
 typedef enum {
-  EVENT,
-  ENTITY,
+  MSG_EVENT,
+  MSG_ENTITY,
 } message_payload_type;
 
 typedef struct {

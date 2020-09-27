@@ -10,6 +10,7 @@
 
 #include "ncurses.h"
 
+#include "errno.h"
 #include "fcntl.h"
 #include "math.h"
 #include "stdlib.h"
@@ -20,28 +21,27 @@
 
 /* client includes */
 
-#include <netdb.h> 
+#include <netdb.h>
+#include <sys/select.h>
 #include <sys/socket.h> 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "unistd.h"
 #define SA struct sockaddr 
-#define MAX_MSG_SIZE 4096
-#define PORT 8080 
+#define MAX_CLIENTS 256
+#define SERVER_PORT 8080 
 #define FPS 60
 
 
 int local_movement_handler(Event_t ev, GameContext_t* ctx) {
   EntityMoveEvent *move_event = (EntityMoveEvent*)&ev.data;
   entity_id id = move_event->id;
-  int delta_x = move_event->delta_x;
-  int delta_y = move_event->delta_y;
   Entity_t *e = Entity_get(ctx->entity_pool, id);
   if (e == NULL) {
     return -1;
   }
-  e->position.x = e->position.x + delta_x;
-  e->position.y = e->position.y + delta_y;
+  e->position.x = move_event->to_x;
+  e->position.y = move_event->to_y;
   return 0;
 }
 
@@ -60,19 +60,22 @@ int local_create_entity_handler(Event_t ev, GameContext_t* ctx) {
 }
 
 typedef enum {
-  LOCAL_MODE,
+  NO_MODE,
   CLIENT_MODE,
   SERVER_MODE
 } runmode;
   
-char msg_buff[MAX_MSG_SIZE]; 
+char msg_buf[sizeof(Message_t) * 2]; 
 int main(int argc, char** argv) {
-  runmode mode = LOCAL_MODE;
+  runmode mode = NO_MODE;
   if (argc > 1) {
     if (strncmp(argv[1], "server", 6) >= 0) {
       mode = SERVER_MODE; 
     } else if (strncmp(argv[1], "client", 6) >= 0) {
       mode = CLIENT_MODE; 
+    } else {
+      printf("usage: %s <server|client>", argv[0]);
+      exit(0);
     }
   }
 
@@ -80,64 +83,98 @@ int main(int argc, char** argv) {
   /* SERVER MODE */
   if (mode == SERVER_MODE) {
     
-    // NEVER ENDING MOVE COMMANDS FOR TESTING 
-    Event_t ev;
-    EntityMoveEvent move_right_event = {.id=1, .delta_x=1, .delta_y=0};
-    ev.type = ENTITY_MOVE;
-    ev.data = (event)move_right_event;
-    Message_t msg = Networking_new_message(EVENT, &ev, sizeof(ev));
-
-    int sockfd, connfd, len; 
-    struct sockaddr_in servaddr, cli; 
+    int serverfd;
+    int clientfds[MAX_CLIENTS] = {0};
+    struct sockaddr_in server_addr, client_addr; 
   
     // socket create and verification 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0); 
-    if (sockfd == -1) { 
-        printf("socket creation failed...\n"); 
-        exit(0); 
+    serverfd = socket(AF_INET, SOCK_STREAM, 0); 
+    if (serverfd == -1) {
+        perror("socket creation failed....");
+        exit(1); 
     } 
-    else
-        printf("Socket successfully created..\n"); 
-    bzero(&servaddr, sizeof(servaddr)); 
-  
-    // assign IP, PORT 
-    servaddr.sin_family = AF_INET; 
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY); 
-    servaddr.sin_port = htons(PORT); 
+    
+    // assign IP, SERVER_PORT 
+    bzero(&server_addr, sizeof(server_addr)); 
+    server_addr.sin_family = AF_INET; 
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
+    server_addr.sin_port = htons(SERVER_PORT); 
  
     int flag = 1;  
-    if (-1 == setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag))) {  
-      perror("setsockopt fail");  
+    if (-1 == setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag))) {  
+      perror("setsockopt fail");
+      exit(1);
     }  
 
     // Binding newly created socket to given IP and verification 
-    if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) { 
+    if ((bind(serverfd, (SA*)&server_addr, sizeof(server_addr))) != 0) { 
         printf("socket bind failed...\n"); 
-        exit(0); 
+        exit(1); 
     } 
   
     // Now server is ready to listen and verification 
-    if ((listen(sockfd, 5)) != 0) { 
+    if ((listen(serverfd, 1)) < 0) { 
         printf("Listen failed...\n"); 
-        exit(0); 
+        exit(1); 
     } 
-    len = sizeof(cli); 
-  
-    // Accept the data packet from client and verification 
-    connfd = accept(sockfd, (SA*)&cli, &len); 
-    if (connfd < 0) { 
-        printf("server acccept failed...\n"); 
-        exit(0); 
-    } 
-  
-    struct timespec waittime = {.tv_sec = 1, .tv_nsec = 999999999 / FPS};
-    for (;;) { 
-        ssize_t n_bytes = write(connfd, &msg, sizeof(msg));
-        printf("bytes written: %lu\n", n_bytes);
-        nanosleep(&waittime, NULL);
-    } 
-  
-    close(sockfd); 
+
+    fd_set selectfds;
+    int max_fd = serverfd;
+    for (;;) {
+      FD_ZERO(&selectfds);
+      FD_SET(serverfd, &selectfds);
+      for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clientfds[i] > 0) {
+          int fd = clientfds[i];
+          FD_SET(fd, &selectfds);
+          if (fd > max_fd) max_fd = fd;
+        }
+      }
+
+      int ready = select(max_fd + 1, &selectfds, NULL, NULL, NULL);
+      if ((ready < 0) && (errno != EINTR)) {
+        perror("select error"); 
+      }
+
+      // Handle new connections.
+      if (FD_ISSET(serverfd, &selectfds)) {
+        socklen_t len;
+        int new_clientfd = accept(serverfd, (SA*)&client_addr, &len);
+        if (new_clientfd < 0) {
+          perror("accept client"); 
+        }
+        
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+          if (clientfds[i] < 1) {
+            clientfds[i] = new_clientfd;
+            break; 
+          }
+        }
+      }
+
+      // Handle clients sending data
+      for (int i = 0; i < MAX_CLIENTS; i++) {
+        int clientfd = clientfds[i];
+        if (FD_ISSET(clientfd, &selectfds)) {
+          int read_len;
+          if ((read_len = read(clientfd, msg_buf, sizeof(msg_buf))) == 0) {
+            // Client is quitting.
+            close(clientfd);
+            clientfds[i] = 0; 
+          }
+          // Send the message to all the other clients
+          for (int i = 0; i < MAX_CLIENTS; i++) {
+            int fd = clientfds[i];
+            if (fd > 0 && fd != clientfd) {
+              write(fd, msg_buf, sizeof(msg_buf)); 
+            }
+          }
+        } 
+      }
+
+    }
+
+    close(serverfd); 
     return 0;
   }
 
@@ -190,104 +227,97 @@ int main(int argc, char** argv) {
   /* CLIENT MODE */
   if (mode == CLIENT_MODE) {
   
-    int sockfd; 
-    struct sockaddr_in servaddr; 
+    int serverfd; 
+    struct sockaddr_in server_addr; 
   
     // socket create and varification 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) { 
+    serverfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverfd == -1) { 
         printf("socket creation failed...\n"); 
         exit(0); 
     } 
   
-    // assign IP, PORT 
-    servaddr.sin_family = AF_INET; 
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
-    servaddr.sin_port = htons(PORT); 
+    // assign IP, SERVER_PORT 
+    server_addr.sin_family = AF_INET; 
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
+    server_addr.sin_port = htons(SERVER_PORT); 
   
     // connect the client socket to server socket 
-    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
+    if (connect(serverfd, (SA*)&server_addr, sizeof(server_addr)) != 0) { 
         printf("connection with the server failed...\n"); 
         exit(0); 
     } 
-  fcntl(sockfd, F_SETFL, O_NONBLOCK);
+    fcntl(serverfd, F_SETFL, O_NONBLOCK);
 
-  Event_t ev;
-  EntityCreateEvent create_entity_event = {};
-  ev.type = ENTITY_CREATE;
-  ev.data = (event)create_entity_event;
-  EventBus_push(&event_bus, ev);
-  EventBus_push(&event_bus, ev);
-  EventBus_handle_events(&event_bus, &ctx);
-  Entity_t *player = ctx.player;
-  if (player == NULL) {
-    return -99;
-  }
-
-  struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
-
-  // Networking buffer.
-  while (running) {
-    // Dynamic screen resizing.
-    int check_max_x, check_max_y = 0;
-    getmaxyx(stdscr, check_max_y, check_max_x);
-    if (check_max_x != max_x || check_max_y != max_y)
-      screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
-
-    // Input handling.
-    EntityMoveEvent move_right_event = {.id=player->id, .delta_x=1, .delta_y=0};
-    EntityMoveEvent move_left_event = {.id=player->id, .delta_x=-1, .delta_y=0};
-    EntityMoveEvent move_up_event = {.id=player->id, .delta_x=0, .delta_y=1};
-    EntityMoveEvent move_down_event = {.id=player->id, .delta_x=0, .delta_y=-1};
-    ev.type = ENTITY_MOVE;
-    switch(getch()) {
-      case 'w':
-        ev.data = (event)move_up_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 's':
-        ev.data = (event)move_down_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 'a':
-        ev.data = (event)move_left_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 'd':
-        ev.data = (event)move_right_event;
-        EventBus_push(&event_bus, ev);
-        break;
-      case 'q':
-        running = false;
-        break;
-    }
-
-    // Check for network messages. 
-    int bytes_in = read(sockfd, msg_buff, sizeof(msg_buff));
-    if (bytes_in > 0) {
-      Message_t *msg = (Message_t*)msg_buff;
-      if (msg->type == EVENT) {
-        Event_t network_ev;
-        memcpy(&network_ev, msg->payload, sizeof(Event_t));
-        EventBus_push(&event_bus, network_ev);
-      }
-    }
-
-    // Event processing.
+    Event_t ev;
+    EntityCreateEvent create_entity_event = {};
+    ev.type = ENTITY_CREATE;
+    ev.data = (event)create_entity_event;
+    EventBus_push(&event_bus, ev);
+    EventBus_push(&event_bus, ev);
     EventBus_handle_events(&event_bus, &ctx);
+    Entity_t *player = ctx.player;
+    if (player == NULL) {
+      return -99;
+    }
 
-    // Rendering.
-    Camera_follow(camera_ptr, player);
-    Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
-    Graphics_blit(screen_ptr);
-    refresh();
-    nanosleep(&waittime, NULL);
-		ImageBuffer_clear(screen_ptr);
-  }
+    struct timespec waittime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
+
+    // A single message struct for sending messages to the server.
+    Message_t msg_out = {0};
+    msg_out.type = MSG_EVENT;
+
+    // Networking buffer.
+    while (running) {
+      // Dynamic screen resizing.
+      int check_max_x, check_max_y = 0;
+      getmaxyx(stdscr, check_max_y, check_max_x);
+      if (check_max_x != max_x || check_max_y != max_y)
+        screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
+
+      // Input handling.
+      char input_c = getch(); 
+      
+      ev.type = ENTITY_MOVE;
+      if (input_c == 'd') {
+        EntityMoveEvent move_right_event = {
+          .id=player->id, 
+          .from_x=player->position.x, 
+          .from_y=player->position.y,
+          .to_x=player->position.x + 1, 
+          .to_y=player->position.y,
+        };
+        ev.data = (event)move_right_event;
+        memcpy(msg_out.payload, (char*)&ev, sizeof(ev));
+        write(serverfd, (char*)&msg_out, sizeof(msg_out));
+        EventBus_push(&event_bus, ev);
+      }
+
+      // Check for network messages. 
+      int bytes_in = read(serverfd, msg_buf, sizeof(msg_buf));
+      if (bytes_in > 0) {
+        Message_t *msg = (Message_t*)msg_buf;
+        if (msg->type == MSG_EVENT) {
+          Event_t network_ev;
+          memcpy(&network_ev, msg->payload, sizeof(Event_t));
+          EventBus_push(&event_bus, network_ev);
+        }
+      }
+
+      // Event processing.
+      EventBus_handle_events(&event_bus, &ctx);
+
+      // Rendering.
+      Camera_follow(camera_ptr, player);
+      Camera_draw(camera_ptr, map_ptr, entity_pool_ptr, screen_ptr);
+      Graphics_blit(screen_ptr);
+      refresh();
+      nanosleep(&waittime, NULL);
+      ImageBuffer_clear(screen_ptr);
+    }
   
     // Close the socket. 
-    close(sockfd); 
+    close(serverfd); 
     return 0;
   }
-
 }
