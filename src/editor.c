@@ -44,8 +44,14 @@ int main(int argc, char** argv) {
   int max_x, max_y = 0;
   getmaxyx(stdscr, max_y, max_x);
   ImageBuffer_t *screen_ptr = ImageBuffer_new(max_x, max_y);
-  
+ 
+  // Setup a 32x32 drawing area
+  Graphics_draw_text(screen_ptr, 0, 0, "wasd to move, c to change color, q to quit, s to save", 80);
+
   struct timespec frametime = {.tv_sec = 0, .tv_nsec = 999999999 / FPS};
+
+  bool blink = true;
+  int blink_count, cursor_x, cursor_y, cursor_color = 0;
 
   // start and stop the game loop.
   bool running = true;
@@ -57,16 +63,41 @@ int main(int argc, char** argv) {
       screen_ptr = ImageBuffer_new(check_max_x, check_max_y);
 
     // Input handling.
-    //char input_c = getch(); 
-    
+    char input_c = getch();
+    if (input_c == 'w') {
+      clear();
+      cursor_y--; 
+    } else if (input_c == 's') {
+      clear();
+      cursor_y++; 
+    } else if (input_c == 'a') {
+      clear();
+      cursor_x--; 
+    } else if (input_c == 'd') {
+      clear();
+      cursor_x++; 
+    } else if (input_c == 'c') {
+      clear();
+      cursor_color++ % 8; 
+    } else if (input_c == ' ') {
+      clear();
+      ImageBuffer_set_pixel_with_color(screen_ptr, cursor_x, cursor_y, cursor_color);
+    } else if (input_c == 'q') {
+      running = false; 
+    }
 
-    // Rendering.
-    Graphics_draw_text(screen_ptr, 1, 0, "press space to add a pixel and c to change colors", 80);
+    attron(COLOR_PAIR(blink ? ImageBuffer_WHITE : cursor_color));
+    mvaddch(cursor_y, cursor_x, ' ');
+    attron(COLOR_PAIR(blink ? ImageBuffer_WHITE : cursor_color));
+    blink_count++;
+    if (blink_count >= FPS >> 1) {
+      blink = !blink;
+      blink_count = 0;
+    }
+    // Rendering 
     Graphics_blit(screen_ptr);
     refresh();
     nanosleep(&frametime, NULL);
-    ImageBuffer_clear(screen_ptr);
-  
   }
   return 0;
 }
