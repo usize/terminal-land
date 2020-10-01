@@ -42,6 +42,8 @@ int local_movement_handler(Event_t ev, GameContext_t* ctx) {
   }
   e->position.x = move_event->to_x;
   e->position.y = move_event->to_y;
+  if (move_event->to_x == move_event->from_x) return 0;
+  e->image.flipped = move_event->to_x < move_event->from_x;
   return 0;
 }
 

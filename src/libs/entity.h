@@ -15,6 +15,7 @@ typedef int entity_id;
 typedef struct {
   int framecount;
   int current_frame;
+  bool flipped;
   int ids[MAX_IMAGE_FRAMES];
 } ImageComponent_t;
 

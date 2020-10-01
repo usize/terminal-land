@@ -45,7 +45,8 @@ void Camera_draw(const Camera_t *c, const Map_t *m, EntityPool_t *ep, ImageBuffe
           fb, 
           e->position.x - from_x,
           // The map and imagebuffer are flipped relative to one another. 
-          to_y - e->position.y);
+          to_y - e->position.y,
+          e->image.flipped);
 
       char label[14];
       sprintf(label, " entity: %i ", e->id);
